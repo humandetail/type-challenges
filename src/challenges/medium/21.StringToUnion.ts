@@ -20,7 +20,10 @@
 
 /* _____________ Your Code Here _____________ */
 
-type StringToUnion<T extends string> = any
+type StringToUnion<T extends string, Result = never> = T extends `${infer F}${infer R}`
+  ? StringToUnion<R, Result | F>
+  : Result
+
 
 
 /* _____________ Test Cases _____________ */

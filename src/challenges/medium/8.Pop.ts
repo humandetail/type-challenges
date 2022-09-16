@@ -27,7 +27,9 @@
 
 /* _____________ Your Code Here _____________ */
 
-type Pop<T extends any[]> = any
+type Pop<T extends any[]> = T extends [...infer R, infer L]
+  ? R
+  : never
 
 
 /* _____________ Test Cases _____________ */

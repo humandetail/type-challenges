@@ -25,7 +25,9 @@
 
 /* _____________ Your Code Here _____________ */
 
-type Last<T extends any[]> = any
+type Last<T extends any[]> = T extends [...infer R, infer L]
+  ? L
+  : never
 
 
 /* _____________ Test Cases _____________ */

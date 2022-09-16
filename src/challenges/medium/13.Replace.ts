@@ -19,7 +19,11 @@
 
 /* _____________ Your Code Here _____________ */
 
-type Replace<S extends string, From extends string, To extends string> = any
+type Replace<S extends string, From extends string, To extends string> = From extends ''
+  ? S
+  : S extends `${infer F}${From}${infer R}`
+    ? `${F}${To}${R}`
+    : S
 
 
 /* _____________ Test Cases _____________ */

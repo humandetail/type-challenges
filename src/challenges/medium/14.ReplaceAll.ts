@@ -19,7 +19,16 @@
 
 /* _____________ Your Code Here _____________ */
 
-type ReplaceAll<S extends string, From extends string, To extends string> = any
+type ReplaceAll<
+  S extends string,
+  From extends string,
+  To extends string,
+  Result extends string = ''
+> = From extends ''
+  ? S
+  : S extends `${infer F}${From}${infer R}`
+    ? ReplaceAll<R, From, To, `${Result}${F}${To}`>
+    : `${Result}${S}`
 
 
 /* _____________ Test Cases _____________ */

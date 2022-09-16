@@ -17,8 +17,11 @@
 
 /* _____________ Your Code Here _____________ */
 
-type Permutation<T> = any
-
+type Permutation<T, A = T> = [T] extends [never]
+  ? []
+  : T extends A
+    ? [T, ...Permutation<Exclude<A, T>>]
+    : never
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

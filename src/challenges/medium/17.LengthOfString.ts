@@ -13,7 +13,9 @@
 
 /* _____________ Your Code Here _____________ */
 
-type LengthOfString<S extends string> = any
+type LengthOfString<S extends string, Arr extends number[] = []> = S extends `${infer F}${infer R}`
+  ? LengthOfString<R, [...Arr, 0]>
+  : Arr['length']
 
 
 /* _____________ Test Cases _____________ */

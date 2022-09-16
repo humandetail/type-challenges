@@ -23,9 +23,11 @@
 
 
 /* _____________ Your Code Here _____________ */
-
-declare function PromiseAll(values: any): any
-
+declare function PromiseAll<T extends unknown[]>(values: readonly [...T]): Promise<{
+  [K in keyof T]: T[K] extends Promise<infer D>
+    ? D
+    : T[K]
+}>
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

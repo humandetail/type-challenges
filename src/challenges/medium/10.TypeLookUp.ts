@@ -30,8 +30,13 @@
 
 /* _____________ Your Code Here _____________ */
 
-type LookUp<U, T> = any
+interface Base<T> {
+  type: T
+}
 
+type LookUp<U extends Animal, T extends U['type']> = U extends Base<T>
+  ? U
+  : never
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

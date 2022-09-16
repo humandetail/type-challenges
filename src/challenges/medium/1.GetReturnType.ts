@@ -26,7 +26,9 @@
 
 /* _____________ Your Code Here _____________ */
 
-type MyReturnType<T> = any
+type MyReturnType<T> = T extends (...args: any[]) => infer R
+  ? R
+  : never
 
 
 /* _____________ Test Cases _____________ */

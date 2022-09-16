@@ -37,7 +37,17 @@
 
 /* _____________ Your Code Here _____________ */
 
-type DeepReadonly<T> = any
+type IsObject<T> = T extends Record<string, any>
+  ? T extends Function
+    ? false
+    : true
+  : false
+
+type DeepReadonly<T> = {
+  readonly [P in keyof T]: IsObject<T[P]> extends true
+    ? DeepReadonly<T[P]>
+    : T[P]
+}
 
 
 /* _____________ Test Cases _____________ */

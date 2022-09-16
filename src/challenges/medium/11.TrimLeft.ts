@@ -18,9 +18,17 @@
 
 
 /* _____________ Your Code Here _____________ */
+type IgnoreString = ' ' | '\n' | '\t'
 
-type TrimLeft<S extends string> = any
+// type TrimLeft<S extends string> = S extends `${infer F}${infer R}`
+//   ? F extends IgnoreString
+//     ? TrimLeft<R>
+//     : S
+//   : ''
 
+type TrimLeft<S extends string> = S extends `${infer F extends IgnoreString}${infer R}`
+  ? TrimLeft<R>
+  : S
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

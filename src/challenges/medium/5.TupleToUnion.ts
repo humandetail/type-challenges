@@ -21,7 +21,7 @@
 
 /* _____________ Your Code Here _____________ */
 
-type TupleToUnion<T> = any
+type TupleToUnion<T extends unknown[]> = T[number]
 
 
 /* _____________ Test Cases _____________ */

@@ -19,7 +19,11 @@
 
 /* _____________ Your Code Here _____________ */
 
-type Flatten = any
+type Flatten<T extends unknown[], Result extends unknown[] = []> = T extends [infer F, ...infer R]
+  ? F extends unknown[]
+    ? Flatten<R, [...Result, ...Flatten<F>]>
+    : Flatten<R, [...Result, F]>
+  : Result
 
 
 /* _____________ Test Cases _____________ */

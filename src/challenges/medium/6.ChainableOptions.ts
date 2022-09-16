@@ -40,9 +40,15 @@
 
 /* _____________ Your Code Here _____________ */
 
-type Chainable = {
-  option(key: string, value: any): any
-  get(): any
+type GetKeyType<T, K extends string, V> = K extends keyof T
+  ? T[K] extends V
+    ? number // 只要不是 string 类型即可
+    : K
+  : K
+
+type Chainable<R = {}> = {
+  option<K extends string, V>(key: GetKeyType<R, K, V>, value: V): Chainable<Omit<R, K> & { [P in K]: V }>
+  get(): R
 }
 
 
