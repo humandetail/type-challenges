@@ -24,7 +24,7 @@
 
 /* _____________ Your Code Here _____________ */
 
-type IsNever<T> = any
+type IsNever<T> = [T] extends [never] ? true : false
 
 
 /* _____________ Test Cases _____________ */

@@ -25,7 +25,17 @@
 
 /* _____________ Your Code Here _____________ */
 
-type KebabCase<S> = any
+type KebabCase<S> = S extends `${infer F}${infer R}`
+  ? R extends Uncapitalize<R>
+    ? `${Lowercase<F>}${KebabCase<R>}`
+    : `${Lowercase<F>}-${KebabCase<R>}`
+  : S
+
+
+type A = 'HELLO WORLD'
+type E = Expect<Equal<Uncapitalize<A>, 'hELLO WORLD'>>
+
+
 
 
 /* _____________ Test Cases _____________ */

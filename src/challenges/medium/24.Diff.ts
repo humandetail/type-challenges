@@ -13,8 +13,31 @@
 
 /* _____________ Your Code Here _____________ */
 
-type Diff<O, O1> = any
+// type Diff<O, O1> = {
+//   [P in keyof O | keyof O1 as (
+//     P extends keyof O
+//       ? P extends keyof O1
+//         ? never
+//         : P
+//       : P extends keyof O1
+//         ? P extends keyof O
+//           ? never
+//           : P
+//         : never
+//   )]: P extends keyof O
+//     ? O[P]
+//     : P extends keyof O1
+//       ? O1[P]
+//       : never
+// }
 
+type Diff<O, O1> = {
+  [P in Exclude<keyof O, keyof O1> | Exclude<keyof O1, keyof O>]: P extends keyof O
+    ? O[P]
+    : P extends keyof O1
+      ? O1[P]
+      : never
+}
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

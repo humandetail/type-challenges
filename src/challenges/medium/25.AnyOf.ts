@@ -19,8 +19,11 @@
 
 
 /* _____________ Your Code Here _____________ */
+type Falsy = 0 | '' | [] | false | Record<PropertyKey, never>
 
-type AnyOf<T extends readonly any[]> = any
+type AnyOf<T extends readonly any[]> = T[number] extends Falsy
+  ? false
+  : true
 
 
 /* _____________ Test Cases _____________ */
