@@ -21,8 +21,13 @@
 
 /* _____________ Your Code Here _____________ */
 
-type IsUnion<T> = any
-
+type IsUnion<T, A = T> = [T] extends [never]
+  ? false
+  : T extends A
+    ? Equal<[T], [A]> extends true
+      ? false
+      : true
+    : false
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

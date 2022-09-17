@@ -26,9 +26,11 @@
 
 
 /* _____________ Your Code Here _____________ */
+type Merge<T> = Omit<T, never>
 
-type PartialByKeys<T, K> = any
-
+type PartialByKeys<T, K extends PropertyKey = keyof T> = Merge<Omit<T, K> & {
+  [P in Extract<K, keyof T>]?: T[P]
+}>
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

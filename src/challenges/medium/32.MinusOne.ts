@@ -20,7 +20,31 @@
 
 /* _____________ Your Code Here _____________ */
 
-type MinusOne<T extends number> = any
+type Dict = {
+  '0': [];
+  '1': [0];
+  '2': [0, 0];
+  '3': [0, 0, 0];
+  '4': [0, 0, 0, 0];
+  '5': [0, 0, 0, 0, 0];
+  '6': [0, 0, 0, 0, 0, 0];
+  '7': [0, 0, 0, 0, 0, 0, 0];
+  '8': [0, 0, 0, 0, 0, 0, 0, 0];
+  '9': [0, 0, 0, 0, 0, 0, 0, 0, 0];
+}
+
+type FillTenTimes<A extends 0[] = []> = [
+  ...A, ...A, ...A, ...A, ...A,
+  ...A, ...A, ...A, ...A, ...A
+]
+
+type Fill<N extends string, Result extends 0[] = []> = N extends `${infer F extends keyof Dict}${infer R}`
+  ? Fill<R, [...FillTenTimes<Result>, ...Dict[F]]>
+  : Result
+
+type MinusOne<T extends number> = Fill<`${T}`> extends [infer F, ...infer R]
+  ? R['length']
+  : T
 
 
 /* _____________ Test Cases _____________ */

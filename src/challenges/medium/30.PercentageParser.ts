@@ -33,7 +33,13 @@
 
 /* _____________ Your Code Here _____________ */
 
-type PercentageParser<A extends string> = any
+type PercentageParser<A extends string> = A extends `${infer S extends '+' | '-'}${infer R}`
+  ? R extends `${infer F}%`
+    ? [S, F, '%']
+    : [S, R, '']
+  : A extends `${infer F}%`
+    ? ['', F, '%']
+    : ['', A, '']
 
 
 /* _____________ Test Cases _____________ */

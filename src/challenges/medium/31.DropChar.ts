@@ -19,7 +19,15 @@
 
 /* _____________ Your Code Here _____________ */
 
-type DropChar<S, C> = any
+// type DropChar<S, C, Result extends string = ''> = S extends `${infer F}${infer R}`
+//   ? F extends C
+//     ? DropChar<R, C, Result>
+//     : DropChar<R, C, `${Result}${F}`>
+//   : Result
+
+type DropChar<S extends string, C extends string> = S extends `${infer F}${infer R}`
+  ? `${F extends C ? '' : F}${DropChar<R, C>}`
+  : S
 
 
 /* _____________ Test Cases _____________ */

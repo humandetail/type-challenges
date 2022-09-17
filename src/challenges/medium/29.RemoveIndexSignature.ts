@@ -25,8 +25,19 @@
 
 
 /* _____________ Your Code Here _____________ */
+type IsSignature<T> = string extends T
+  ? true
+  : number extends T
+    ? true
+    : symbol extends T
+      ? true
+      : false
 
-type RemoveIndexSignature<T> = any
+type RemoveIndexSignature<T> = {
+  [P in keyof T as IsSignature<P> extends true ? never : P]: T[P]
+}
+
+
 
 
 /* _____________ Test Cases _____________ */

@@ -44,7 +44,13 @@
 
 /* _____________ Your Code Here _____________ */
 
-type ReplaceKeys<U, T, Y> = any
+type ReplaceKeys<U, T, Y> = {
+  [P in keyof U]: P extends T
+    ? P extends keyof Y
+      ? Y[P]
+      : never
+    : U[P]
+}
 
 
 /* _____________ Test Cases _____________ */
