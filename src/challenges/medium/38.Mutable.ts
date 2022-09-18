@@ -26,7 +26,9 @@
 
 /* _____________ Your Code Here _____________ */
 
-type Mutable<T> = any
+type Mutable<T extends Record<PropertyKey, any>> = {
+  -readonly [P in keyof T]: T[P]
+}
 
 
 /* _____________ Test Cases _____________ */

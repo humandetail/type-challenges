@@ -21,7 +21,9 @@
 
 /* _____________ Your Code Here _____________ */
 
-type Flip<T> = any
+type Flip<T extends Record<PropertyKey, any>> = {
+  [P in keyof T as T[P] extends PropertyKey ? T[P] : `${T[P]}`]: P
+}
 
 
 /* _____________ Test Cases _____________ */

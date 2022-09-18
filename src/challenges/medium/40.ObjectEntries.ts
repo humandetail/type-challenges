@@ -24,7 +24,9 @@
 
 /* _____________ Your Code Here _____________ */
 
-type ObjectEntries<T> = any
+type ObjectEntries<T, R = Required<T>, K extends keyof R = keyof R> = K extends keyof R
+  ? [K, R[K] extends undefined ? undefined : R[K]]
+  : never
 
 
 /* _____________ Test Cases _____________ */

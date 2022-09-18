@@ -28,7 +28,13 @@
 
 /* _____________ Your Code Here _____________ */
 
-type RequiredByKeys<T, K> = any
+type Merge<T> = Omit<T, never>
+
+type RequiredByKeys<T, K = keyof T> = Merge<{
+  [P in keyof T as P extends K ? P : never]-?: T[P]
+} & {
+  [P in keyof T as P extends K ? never : P]: T[P]
+}>
 
 
 /* _____________ Test Cases _____________ */

@@ -21,8 +21,21 @@
 
 
 /* _____________ Your Code Here _____________ */
+type Plus<T extends number, R extends 0[] = []> = R['length'] extends T
+  ? [...R, 0]['length']
+  : Plus<T, [0, ...R]>
 
-type FlattenDepth = any
+type FlattenDepth<T extends unknown[], D extends number = 1, S extends number = 0> = S extends D
+  ? T
+  : T extends [infer F, ...infer R]
+    ? [
+      ...(F extends any[]
+        ? FlattenDepth<F, D, Plus<S>>
+        : [F]
+      ),
+      ...FlattenDepth<R, D, S>
+    ]
+    : T
 
 
 /* _____________ Test Cases _____________ */

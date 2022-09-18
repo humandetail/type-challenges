@@ -19,7 +19,9 @@
 
 /* _____________ Your Code Here _____________ */
 
-type Shift<T> = any
+type Shift<T> = T extends [infer F, ...infer R]
+  ? R
+  : never
 
 
 /* _____________ Test Cases _____________ */

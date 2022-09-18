@@ -19,7 +19,11 @@
 
 /* _____________ Your Code Here _____________ */
 
-type TupleToNestedObject<T, U> = any
+type TupleToNestedObject<T, U> = T extends [infer F extends string, ...infer R]
+  ? {
+    [P in F]: TupleToNestedObject<R, U>
+  }
+  : U
 
 
 /* _____________ Test Cases _____________ */

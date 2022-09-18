@@ -21,8 +21,13 @@
 
 
 /* _____________ Your Code Here _____________ */
+type Reverse<T> = T extends [...infer R, infer L]
+  ? [L, ...Reverse<R>]
+  : T
 
-type FlipArguments<T> = any
+type FlipArguments<T extends (...args: any[]) => any> = T extends (...args: infer Args) => infer R
+  ? (...args: Reverse<Args>) => R
+  : never
 
 
 /* _____________ Test Cases _____________ */

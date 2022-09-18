@@ -21,8 +21,27 @@
 
 
 /* _____________ Your Code Here _____________ */
+type NumberToTuple<T extends Number, R extends 0[] = []> = R['length'] extends T
+  ? R
+  : NumberToTuple<T, [...R, 0]>
 
-type Fibonacci<T extends number> = any
+type Plus<T extends number, N extends number> = [
+  ...NumberToTuple<T>,
+  ...NumberToTuple<N>
+]['length'] & number
+
+// 1, 1, 2, 3, 5, 8,  ...
+
+type Fibonacci<
+  T extends number,
+  Start extends number = 2,
+  Prev extends number = 0,
+  Last extends number = 1
+> = T extends 0 | 1
+  ? 1
+  : Start extends T
+    ? Plus<Prev, Last>
+    : Fibonacci<T, Plus<Start, 1>, Last, Plus<Prev, Last>>
 
 
 /* _____________ Test Cases _____________ */

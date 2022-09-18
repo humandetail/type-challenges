@@ -20,7 +20,9 @@
 
 /* _____________ Your Code Here _____________ */
 
-type Reverse<T> = any
+type Reverse<T> = T extends [...infer R, infer L]
+  ? [L, ...Reverse<R>]
+  : T
 
 
 /* _____________ Test Cases _____________ */
