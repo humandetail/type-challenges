@@ -46,9 +46,21 @@
 
 
 /* _____________ Your Code Here _____________ */
+type OptionsType<Data, Computed, Methods> = {
+  data?: () => Data;
+  computed?: Computed & ThisType<Data & {
+    [P in keyof Computed]: Computed[P] extends (...args: any) => infer R
+      ? R
+      : never
+  }>;
+  methods?: Methods & ThisType<Data & {
+    [P in keyof Computed]: Computed[P] extends (...args: any) => infer R
+      ? R
+      : never
+  } & Methods>;
+}
 
-declare function SimpleVue(options: any): any
-
+declare function SimpleVue<Data, Computed, Methods>(options: OptionsType<Data, Computed, Methods>): any
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'
