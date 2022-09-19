@@ -21,7 +21,11 @@
 
 /* _____________ Your Code Here _____________ */
 
-type IsTuple<T> = any
+type IsTuple<T> = [T] extends [never]
+  ? false
+  : T extends readonly [any?]
+    ? true
+    : false
 
 
 /* _____________ Test Cases _____________ */

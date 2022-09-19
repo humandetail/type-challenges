@@ -18,8 +18,15 @@
 
 
 /* _____________ Your Code Here _____________ */
+type PlusOne<T extends number, Res extends 0[] = []> = Res['length'] extends T
+  ? [...Res, 0]['length']
+  : PlusOne<T, [...Res, 0]>
 
-type IndexOf<T, U> = any
+type IndexOf<T, U, I extends number = 0> = T extends [infer F, ...infer R]
+  ? Equal<F, U> extends true
+    ? I
+    : IndexOf<R, U, PlusOne<I>>
+  : -1
 
 
 /* _____________ Test Cases _____________ */

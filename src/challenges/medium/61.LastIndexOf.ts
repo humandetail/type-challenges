@@ -19,8 +19,11 @@
 
 
 /* _____________ Your Code Here _____________ */
-
-type LastIndexOf<T, U> = any
+type LastIndexOf<T extends unknown[], U> = T extends [...infer R, infer L]
+  ? Equal<U, L> extends true
+    ? R['length']
+    : LastIndexOf<R, U>
+  : -1
 
 
 /* _____________ Test Cases _____________ */

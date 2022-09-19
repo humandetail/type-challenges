@@ -20,8 +20,17 @@
 
 
 /* _____________ Your Code Here _____________ */
+type Includes<T extends unknown[], U> = T extends [infer F, ...infer R]
+  ? Equal<U, F> extends true
+    ? true
+    : Includes<R, U>
+  : false
 
-type Unique<T> = any
+type Unique<T extends unknown[], Res extends unknown[] = []> = T extends [infer F, ...infer R]
+  ? Includes<Res, F> extends true
+    ? Unique<R, Res>
+    : Unique<R, [...Res, F]>
+  : Res
 
 
 /* _____________ Test Cases _____________ */

@@ -19,13 +19,31 @@
 
 
 /* _____________ Your Code Here _____________ */
+type PlusOne<T extends number, Res extends 0[] = []> = Res['length'] extends T
+  ? [...Res, 0]['length']
+  : PlusOne<T, [...Res, 0]>
+
+type FillRest<
+  T extends unknown[],
+  N,
+  Start extends number = 0,
+  End extends number = T['length'],
+  Count extends number = 0,
+  Res extends unknown[] = []
+> = Start extends End
+  ? [...Res, ...T]
+  : T extends [infer F, ... infer R]
+    ? Count extends Start
+      ? FillRest<R, N, PlusOne<Start>, End, PlusOne<Count>, [...Res, N]>
+      : FillRest<R, N, Start, End, PlusOne<Count>, [...Res, F]>
+    : Res
 
 type Fill<
   T extends unknown[],
   N,
   Start extends number = 0,
-  End extends number = T['length'],
-> = any
+  End extends number = T['length']
+> = Start extends End ? T : End extends 0 ? T : FillRest<T, N, Start, End>
 
 
 /* _____________ Test Cases _____________ */

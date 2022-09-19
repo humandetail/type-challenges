@@ -19,9 +19,15 @@
 
 
 /* _____________ Your Code Here _____________ */
+type RemoveLast<T extends string, U extends string> = T extends `${infer R}${U}`
+  ? R
+  : T
 
-type Join<T, U> = any
+type FullJoin<T extends string[], U extends string, Result extends string = ''> = T extends [infer F extends string, ...infer R extends string[]]
+  ? FullJoin<R, U, `${Result}${F}${U}`>
+  : Result
 
+type Join<T extends string[], U extends string | number> = RemoveLast<FullJoin<T, `${U}`>, `${U}`>
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

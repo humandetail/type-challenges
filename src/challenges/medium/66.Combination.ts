@@ -18,9 +18,9 @@
 
 
 /* _____________ Your Code Here _____________ */
-
-type Combination<T extends string[]> = any
-
+type Combination<T extends string[], U = T[number], D = U> = D extends string
+  ? `${D}` | `${D} ${Combination<[], Exclude<U, D>>}`
+  : never
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

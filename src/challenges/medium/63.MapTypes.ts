@@ -39,9 +39,17 @@
 
 
 /* _____________ Your Code Here _____________ */
+type Includes<T extends Record<'mapFrom' | 'mapTo', any>, U> = T extends {}
+  ? T['mapFrom'] extends U
+    ? T['mapTo']
+    : never
+  : T['mapTo']
 
-type MapTypes<T, R> = any
-
+type MapTypes<T, R extends Record<'mapFrom' | 'mapTo', any>> = {
+  [P in keyof T]: T[P] extends R['mapFrom']
+    ? Includes<R, T[P]>
+    : T[P]
+}
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

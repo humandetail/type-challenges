@@ -18,8 +18,15 @@
 
 
 /* _____________ Your Code Here _____________ */
+type Removable = ' ' | '\n' | '\t'
 
-type Trim<S extends string> = any
+type Trim<S extends string> = S extends `${Removable}${infer R}`
+  ? R extends `${infer L}${Removable}`
+    ? Trim<L>
+    : Trim<R>
+  : S extends `${infer L}${Removable}`
+    ? Trim<L>
+    : S
 
 
 /* _____________ Test Cases _____________ */

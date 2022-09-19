@@ -25,9 +25,23 @@
 
 
 /* _____________ Your Code Here _____________ */
+type NumberToTuple<T extends number, Res extends 0[] = []> = Res['length'] extends T
+  ? Res
+  : NumberToTuple<T, [...Res, 0]>
 
-type GreaterThan<T extends number, U extends number> = any
+type MinusOne<T extends number, Res extends 0[] = NumberToTuple<T>> = Res extends [infer F, ...infer R]
+  ? R['length']
+  : never
 
+type GT<T extends number, U extends number> = T extends U
+  ? true
+  : T extends 0
+    ? false
+    : GT<MinusOne<T>, U>
+
+type GreaterThan<T extends number, U extends number> = Equal<T, U> extends true
+  ? false
+  : GT<T, U>
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

@@ -19,7 +19,9 @@
 
 /* _____________ Your Code Here _____________ */
 
-type Trunc = any
+type Trunc<T extends number | string> = `${T}` extends `${infer F}.${infer R}`
+  ? `${F}`
+  : `${T}`
 
 
 /* _____________ Test Cases _____________ */

@@ -21,8 +21,9 @@
 
 /* _____________ Your Code Here _____________ */
 
-type Subsequence<T extends any[]> = any
-
+type Subsequence<T extends any[], Result extends any[] = []> = T extends [infer F, ...infer R]
+  ? Result | Subsequence<R, [...Result, F]> | Subsequence<R, Result>
+  : Result
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

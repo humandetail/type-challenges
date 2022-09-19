@@ -19,8 +19,19 @@
 
 
 /* _____________ Your Code Here _____________ */
+type Slice<T extends unknown[], N extends number = 1, Res extends unknown[] = []> = Res['length'] extends N
+  ? Res
+  : T extends [infer F, ...infer R]
+    ? Slice<R, N, [...Res, F]>
+    : Res
 
-type Chunk = any
+type Chunk<T extends unknown[], N extends number = 1, Res extends unknown[] = []> = T extends []
+  ? []
+  : T extends [...Slice<T, N>, ...infer R]
+    ? R extends []
+      ? [...Res, Slice<T, N>]
+      : Chunk<R, N, [...Res, Slice<T, N>]>
+    : never
 
 
 /* _____________ Test Cases _____________ */
