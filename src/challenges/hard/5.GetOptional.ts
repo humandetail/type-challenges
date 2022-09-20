@@ -19,7 +19,9 @@
 
 /* _____________ Your Code Here _____________ */
 
-type GetOptional<T> = any
+type GetOptional<T> = {
+  [P in keyof T as { [K in P]: T[K] } extends Required<{ [K in P]: T[K] }> ? never : P]: T[P]
+}
 
 
 /* _____________ Test Cases _____________ */

@@ -13,7 +13,9 @@
 
 /* _____________ Your Code Here _____________ */
 
-type OptionalKeys<T> = any
+type OptionalKeys<T> = keyof {
+  [P in keyof T as Omit<T, P> extends T ? P : never]: T[P]
+}
 
 
 /* _____________ Test Cases _____________ */

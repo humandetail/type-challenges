@@ -28,9 +28,13 @@
 
 
 /* _____________ Your Code Here _____________ */
+type CurryingReturnType<D, T extends (arg: any) => any> = D extends [...infer R, infer L]
+  ? CurryingReturnType<R, (arg: L) => T>
+  : T
 
-declare function Currying(fn: any): any
-
+declare function Currying<T>(fn: T): T extends (...args: [...infer R, infer L]) => infer Return
+  ? CurryingReturnType<R, (arg: L) => Return>
+  : never
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

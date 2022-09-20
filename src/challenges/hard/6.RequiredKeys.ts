@@ -19,9 +19,9 @@
 
 
 /* _____________ Your Code Here _____________ */
-
-type RequiredKeys<T> = any
-
+type RequiredKeys<T> = keyof {
+  [P in keyof T as Omit<T, P> extends T ? never : P]: T[P]
+}
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

@@ -19,8 +19,36 @@
 
 
 /* _____________ Your Code Here _____________ */
+// type NoAphabet<T> = T extends `${infer F}${infer R}`
+//   ? Lowercase<F> extends Uppercase<F>
+//     ? NoAphabet<R>
+//     : false
+//   : true
 
-type CamelCase<S extends string> = any
+// type ToCamelCase<
+//   S extends string,
+//   Bool extends boolean = false,
+//   Result extends string = ''
+// > = S extends `${infer F}${infer R}`
+//   ? Lowercase<F> extends Uppercase<F>
+//     ? ToCamelCase<R, true, Result>
+//     : Bool extends true
+//       ? ToCamelCase<R, false, `${Result}${Uppercase<F>}`>
+//       : ToCamelCase<R, false, `${Result}${Lowercase<F>}`>
+//   : Result
+
+// type CamelCase<
+//   S extends string
+// > = NoAphabet<S> extends true ? S : ToCamelCase<S>
+
+
+type CamelCase<S extends string, Result extends string = '', IsFirst extends boolean = true> = S extends `${infer F}${infer R}`
+  ? IsFirst extends true
+    ? CamelCase<Uncapitalize<S>, Result, false>
+    : F extends '_'
+      ? CamelCase<Capitalize<R>, Result, false>
+      : CamelCase<Uncapitalize<R>, `${Result}${F}`, false>
+  : Result
 
 
 /* _____________ Test Cases _____________ */

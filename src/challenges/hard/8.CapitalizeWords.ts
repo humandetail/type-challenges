@@ -18,9 +18,22 @@
 
 
 /* _____________ Your Code Here _____________ */
+type Alphabet = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G'
+  | 'H' | 'I' | 'J' | 'K' | 'L' | 'M' | 'N' | 'O' | 'P'
+  | 'Q' | 'R' | 'S' | 'T' | 'U' | 'V' | 'W' | 'X' | 'Y' | 'Z'
 
-type CapitalizeWords<S extends string> = any
+type CapitalizeWords<
+  S extends string,
+  Prev extends string = '',
+  Result extends string = ''
+> = S extends `${infer F}${infer R}`
+  ? Uppercase<Prev> extends Alphabet
+    ? CapitalizeWords<R, F, `${Result}${F}`>
+    : CapitalizeWords<R, F, `${Result}${Uppercase<F>}`>
+  : Result
 
+// type True = Expect<Equal<Lowercase<'.'> extends Uppercase<'.'> ? true : false, true>>
+// type False = Expect<Equal<Lowercase<'a'> extends Uppercase<'A'> ? true : false, false>>
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

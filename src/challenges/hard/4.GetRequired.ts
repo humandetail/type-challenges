@@ -18,8 +18,21 @@
 
 
 /* _____________ Your Code Here _____________ */
+type GetRequired<T> = {
+  [P in keyof T as { [K in P]: T[K] } extends Required<{ [K in P]: T[K] }> ? P : never]: T[P]
+}
 
-type GetRequired<T> = any
+// type A = { foo: number; bar?: string }
+// type AE = Expect<Equal<A, Required<A>>> // false
+
+// type B = { foo: number; bar: string }
+// type BE = Expect<Equal<B, Required<B>>> // true
+
+// type C = { foo: number }
+// type CE = Expect<Equal<C, Required<C>>> // true
+
+// type D = { bar?: string }
+// type DE = Expect<Equal<D, Required<D>>> // false
 
 
 /* _____________ Test Cases _____________ */
