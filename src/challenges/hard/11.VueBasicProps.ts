@@ -48,8 +48,48 @@
 
 
 /* _____________ Your Code Here _____________ */
+type Constructor = new (...args: any) => any
 
-declare function VueBasicProps(options: any): any
+type PropsValue = Constructor | { type?: Constructor | Constructor[] }
+
+type ConstructorMap<T> = T extends undefined
+  ? any
+  : T extends StringConstructor
+    ? string
+    : T extends NumberConstructor
+      ? number
+      : T extends RegExpConstructor
+        ? RegExp
+        : T extends BooleanConstructor
+          ? boolean
+          : T extends Constructor[]
+            ? ConstructorMap<T[number]>
+            : T extends { prototype: infer P }
+              ? P
+              : any
+
+type PropsContext<T> = {
+  [K in keyof T]: T[K] extends { type: infer R }
+    ? ConstructorMap<R>
+    : ConstructorMap<T[K]>
+}
+
+type OptionsType<Props extends Record<string, PropsValue>, Data, Computed, Methods> = {
+  props?: Props,
+  data?: (this: PropsContext<Props>) => Data;
+  computed?: Computed & ThisType<Data & {
+    [P in keyof Computed]: Computed[P] extends (...args: any) => infer R
+      ? R
+      : never
+  } & PropsContext<Props>>;
+  methods?: Methods & ThisType<PropsContext<Props> & Data & {
+    [P in keyof Computed]: Computed[P] extends (...args: any) => infer R
+      ? R
+      : never
+  } & Methods>;
+}
+
+declare function VueBasicProps<Props extends Record<string, PropsValue>, Data, Computed, Methods>(options: OptionsType<Props, Data, Computed, Methods>): any
 
 
 /* _____________ Test Cases _____________ */

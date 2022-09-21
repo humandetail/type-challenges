@@ -19,7 +19,9 @@
 
 /* _____________ Your Code Here _____________ */
 
-type LengthOfString<S extends string> = number
+type LengthOfString<S extends string, Result extends 0[] = []> = S extends `${infer F}${infer R}`
+  ? LengthOfString<R, [...Result, 0]>
+  : Result['length']
 
 
 /* _____________ Test Cases _____________ */

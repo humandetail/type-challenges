@@ -31,8 +31,31 @@
 
 
 /* _____________ Your Code Here _____________ */
+type PlusOne<N extends number, Result extends 0[] = []> = Result['length'] extends N
+  ? [...Result, 0]['length']
+  : PlusOne<N, [...Result, 0]>
 
-type Enum<T extends readonly string[], N extends boolean = false> = any
+type Enum<
+  T extends readonly string[],
+  N extends boolean = false,
+  Result extends Record<string, any> = {},
+  Index extends number = 0
+> = T extends readonly [infer F extends string, ...infer R extends readonly string[]]
+  ? Enum<
+      R,
+      N,
+      {
+        readonly [K in F | keyof Result as K extends string ? Capitalize<K> : never]: K extends keyof Result
+          ? Result[K]
+          : K extends string
+            ? N extends false
+              ? `${K}`
+              : Index
+            : never
+      },
+      PlusOne<Index>
+    >
+  : Result
 
 
 /* _____________ Test Cases _____________ */

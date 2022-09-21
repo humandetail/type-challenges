@@ -15,7 +15,9 @@
 
 /* _____________ Your Code Here _____________ */
 
-type IsAny<T> = any
+type IsAny<T> = (<A>() => A extends T ? 1 : 2) extends (<A>() => A extends any ? 1 : 2) ? true : false
+
+type IsAny2<T> = Equal<T, any>
 
 
 /* _____________ Test Cases _____________ */

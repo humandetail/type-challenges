@@ -21,8 +21,20 @@
 
 
 /* _____________ Your Code Here _____________ */
+type M = {
+  d: number;
+  s: string;
+}
 
-type Format<T extends string> = any
+type Format<T extends string, Prev extends string = ''> = T extends `${infer F}${infer R}`
+  ? Prev extends '%'
+    ? F extends '%'
+      ? Format<R, ''>
+      : F extends keyof M
+        ? (arg: M[F]) => Format<R, ''>
+        : Format<R, F>
+      : Format<R, F>
+  : string
 
 
 /* _____________ Test Cases _____________ */

@@ -33,8 +33,13 @@
 
 
 /* _____________ Your Code Here _____________ */
-
-type Get<T, K> = string
+type Get<T, K extends string> = K extends `${infer Key}.${infer R}`
+  ? Key extends keyof T
+    ? Get<T[Key], R>
+    : never
+  : K extends keyof T
+    ? T[K]
+    : never
 
 
 /* _____________ Test Cases _____________ */

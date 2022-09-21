@@ -39,7 +39,12 @@
 
 /* _____________ Your Code Here _____________ */
 
-type DeepObjectToUniq<O extends object> = any
+type DeepObjectToUniq<O extends object, U extends readonly any[] = [O]> = {
+  [K in keyof O]: O[K] extends object
+    ? DeepObjectToUniq<O[K], [...U, K]>
+    : O[K]
+} & { [K in symbol]: U }
+
 
 
 /* _____________ Test Cases _____________ */

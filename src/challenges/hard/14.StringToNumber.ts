@@ -12,9 +12,40 @@
 
 
 /* _____________ Your Code Here _____________ */
+type NumberMap = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
 
-type ToNumber<S extends string> = any
+type GetResult<S extends string, Result extends number[] = []> = S extends `${infer F}${infer R}`
+  ? F extends keyof NumberMap
+    ? GetResult<R, [...Result, NumberMap[F] & number]>
+    : never
+  : Result
 
+type NumberToTuple<N extends number, Result extends 0[] = []> = Result['length'] extends N
+  ? Result
+  : NumberToTuple<N, [...Result, 0]>
+
+type GetTenTimes<T extends any[] = []> = [
+  ...T, ...T, ...T, ...T, ...T,
+  ...T, ...T, ...T, ...T, ...T
+]
+
+type GetLength<T extends number[], Result extends unknown[] = []> = T extends [infer F extends number, ...infer R extends number[]]
+  ? GetLength<R, [...GetTenTimes<Result>, ...NumberToTuple<F>]>
+  : Result['length']
+
+type ToNumber<S extends string, R extends number[] = GetResult<S>> = [R] extends [never]
+  ? never
+  : GetLength<R>
+
+// type E = [
+//   Expect<Equal<GetResult<'12'>, [1, 2]>>,
+//   Expect<Equal<GetResult<'0'>, [0]>>,
+//   Expect<Equal<GetResult<'123@abc'>, never>>
+// ]
+
+// type ToNumber<
+//      S extends string> = 
+//      S extends `${infer N extends number}` ? N : never  ;
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'
