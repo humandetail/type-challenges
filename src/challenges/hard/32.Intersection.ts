@@ -21,9 +21,15 @@
 
 
 /* _____________ Your Code Here _____________ */
+type Intersection<T> = T extends [infer F, ...infer R]
+  ? F extends unknown[]
+    ? Extract<F[number], Intersection<R>>
+    : Extract<F, Intersection<R>>
+  : unknown
 
-type Intersection<T> = any
-
+// type A = Extract<1 | 2, unknown> // 1 | 2
+// type B = Extract<1 | 2, never> // never
+// type C = Extract<unknown, 1 | 2> // never
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

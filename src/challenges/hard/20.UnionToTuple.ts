@@ -39,8 +39,28 @@
 
 
 /* _____________ Your Code Here _____________ */
+/**
+ * UnionToFunc<1 | 2> => ((arg: 1) => void | (arg: 2) => void)
+ */
+type UnionToFunc<T> = T extends unknown ? (arg: T) => void : never
 
-type UnionToTuple<T> = any
+/**
+ * UnionToIntersection<1 | 2> = 1 & 2
+ */
+type UnionToIntersection<U> = UnionToFunc<U> extends (arg: infer Arg) => void
+  ? Arg
+  : never
+
+/**
+ * LastInUnion<1 | 2> = 2
+ */
+type LastInUnion<U> = UnionToIntersection<UnionToFunc<U>> extends (x: infer L) => void
+  ? L
+  : never
+
+type UnionToTuple<T, L = LastInUnion<T>> = [L] extends [never]
+  ? []
+  : [...UnionToTuple<Exclude<T, L>>, L]
 
 
 /* _____________ Test Cases _____________ */
@@ -61,8 +81,6 @@ type cases = [
   Expect<Equal<ExtractValuesOfTuple<UnionToTuple<never>>, never>>,
   Expect<Equal<ExtractValuesOfTuple<UnionToTuple<'a' | 'b' | 'c' | 1 | 2 | 'd' | 'e' | 'f' | 'g'>>, 'f' | 'e' | 1 | 2 | 'g' | 'c' | 'd' | 'a' | 'b'>>,
 ]
-
-
 
 /* _____________ Further Steps _____________ */
 /*

@@ -37,9 +37,27 @@
 
 
 /* _____________ Your Code Here _____________ */
+type Get<T, K extends string> = K extends `${infer Key}.${infer R}`
+  ? Key extends keyof T
+    ? { [P in keyof T as P extends Key ? P : never]: Get<T[Key], R> }
+    : never
+  : K extends keyof T
+    ? { [P in keyof T as P extends K ? P : never ]: T[K] }
+    : never
 
-type DeepPick = any
+/**
+ * UnionToFunc<1 | 2> => ((arg: 1) => void | (arg: 2) => void)
+ */
+ type UnionToFunc<T> = T extends unknown ? (arg: T) => void : never
 
+ /**
+  * UnionToIntersection<1 | 2> = 1 & 2
+  */
+ type UnionToIntersection<U> = UnionToFunc<U> extends (arg: infer Arg) => void
+   ? Arg
+   : never
+
+type DeepPick<T, K extends string> = UnionToIntersection<Get<T, K>>
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

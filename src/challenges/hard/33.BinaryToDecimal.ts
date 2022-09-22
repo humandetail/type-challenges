@@ -18,8 +18,17 @@
 
 
 /* _____________ Your Code Here _____________ */
+type NumberToArray<N extends number, Result extends 0[] = []> = Result['length'] extends N
+  ? Result
+  : NumberToArray<N, [...Result, 0]>
 
-type BinaryToDecimal<S extends string> = any
+type GetTwice<T extends unknown[]> = [
+  ...T, ...T
+]
+
+type BinaryToDecimal<S extends string, Result extends unknown[] = []> = S extends `${infer F extends number}${infer R}`
+  ? BinaryToDecimal<R, [...GetTwice<Result>, ...NumberToArray<F>]>
+  : Result['length']
 
 
 /* _____________ Test Cases _____________ */

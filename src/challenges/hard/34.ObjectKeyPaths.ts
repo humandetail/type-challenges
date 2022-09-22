@@ -21,9 +21,17 @@
 
 
 /* _____________ Your Code Here _____________ */
+type GetPath<K extends PropertyKey & (string | number), Prefix extends string = ''> = [Prefix] extends [never]
+  ? `${K}`
+  : K extends number
+    ? `${Prefix}.${K}` | `${Prefix}[${K}]` | `${Prefix}.[${K}]`
+    : `${Prefix}.${K}`
 
-type ObjectKeyPaths<T extends object> = any
-
+type ObjectKeyPaths<T extends object, Result extends string = never> = Result | {
+  [P in keyof T & (string | number)]: T[P] extends object
+    ? ObjectKeyPaths<T[P], GetPath<P, Result>>
+    : GetPath<P, Result>
+}[keyof T & (string | number)]
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect, ExpectExtends } from '@type-challenges/utils'

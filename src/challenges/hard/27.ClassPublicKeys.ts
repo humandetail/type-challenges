@@ -28,7 +28,7 @@
 
 /* _____________ Your Code Here _____________ */
 
-type ClassPublicKeys = any
+type ClassPublicKeys<T> = keyof T
 
 
 /* _____________ Test Cases _____________ */

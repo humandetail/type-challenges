@@ -26,8 +26,74 @@
 
 
 /* _____________ Your Code Here _____________ */
+/**
+ * StringToNumber<'01'> // 1
+ * StringToNumber<'1'> // 1
+ * SttringToNumber<''> // 0
+ */
+type StringToNumber<T extends string> = T extends `0${infer R extends number}`
+  ? R
+  : T extends `${infer R extends number}`
+    ? R
+    : 0
 
-type ValidDate<T extends string> = any
+type PlusOne<T extends number, R extends 0[] = []> = R['length'] extends T
+  ? [0, ...R]['length']
+  : PlusOne<T, [0, ...R]>
+
+/**
+ * GetDateAndMonth<'0'> // [0, 0]
+ * GetDateAndMonth<'0123'> // [1, 23]
+ * GetDateAndMonth<'01234'> // [1, 234]
+ */
+type GetDateAndMonth<T extends string, C extends number = 0, Date extends string = '', Month extends string = ''> = C extends 2
+  ? [StringToNumber<Date>, StringToNumber<T>]
+  : T extends `${infer F}${infer R}`
+    ? GetDateAndMonth<R, PlusOne<C>, `${Date}${F}`>
+    : [StringToNumber<Date>, StringToNumber<Month>]
+
+type NumberToTuple<T extends number, Res extends 0[] = []> = Res['length'] extends T
+  ? Res
+  : NumberToTuple<T, [...Res, 0]>
+  
+type MinusOne<T extends number, Res extends 0[] = NumberToTuple<T>> = Res extends [infer F, ...infer R]
+  ? R['length']
+  : never
+  
+type GT<T extends number, U extends number> = T extends U
+  ? true
+  : T extends 0
+    ? false
+    : GT<MinusOne<T>, U>
+
+/**
+ * GreaterThan<1, 2> // false
+ * GreaterThan<2, 2> // false
+ * GreaterThan<3, 2> // true
+ */
+type GreaterThan<T extends number, U extends number> = Equal<T, U> extends true
+  ? false
+  : GT<T, U>
+
+/**
+ * InRange<2, 1, 2> // false
+ * InRange<2, 1, 3> // true
+ */
+type InRange<A extends number, F extends number, R extends number> = GreaterThan<A, F> extends true
+  ? GreaterThan<R, A> extends true
+    ? true
+    : false
+  : false
+
+type ValidDate<T extends string, A extends [number, number] = GetDateAndMonth<T>> = InRange<A[0], 0, 13> extends true
+  ? A[0] extends 2
+    ? InRange<A[1], 0, 29> extends true
+      ? true
+      : false
+    : InRange<A[1], 0, 32> extends true
+      ? true
+      : false
+  : false
 
 
 /* _____________ Test Cases _____________ */

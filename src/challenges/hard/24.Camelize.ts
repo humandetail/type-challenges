@@ -27,9 +27,19 @@
 
 
 /* _____________ Your Code Here _____________ */
+type CamelizeKey<K> = K extends `${infer F}_${infer R}`
+  ? `${F}${CamelizeKey<Capitalize<R>>}`
+  : K
 
-type Camelize<T> = any
-
+type Camelize<T> = T extends unknown[]
+  ? T extends [infer F, ...infer R]
+    ? [Camelize<F>, ...Camelize<R>]
+    : []
+  : {
+    [P in keyof T as CamelizeKey<P>]: T[P] extends object
+      ? Camelize<T[P]>
+      : T[P]
+  }
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

@@ -32,8 +32,17 @@
 
 
 /* _____________ Your Code Here _____________ */
+type JoinString<
+  A extends string[],
+  T extends string,
+  Result extends string = ''
+> = A extends [infer F extends string, ...infer R extends string[]]
+  ? Result extends ''
+    ? JoinString<R, T, F>
+    : JoinString<R, T, `${Result}${T}${F}`>
+  : Result
 
-declare function join(delimiter: any): (...parts: any[]) => any
+declare function join<T extends string>(delimiter: T): <A extends string[] = []>(...parts: A) => JoinString<A, T>
 
 
 /* _____________ Test Cases _____________ */

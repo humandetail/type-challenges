@@ -19,8 +19,15 @@
 
 /* _____________ Your Code Here _____________ */
 
-type Split<S extends string, SEP extends string> = any
-
+type Split<S extends string, SEP extends string> = SEP extends ''
+  ? S extends `${infer F}${infer R}`
+    ? [F, ...Split<R, SEP>]
+    : []
+  : SEP extends S
+    ? S[]
+    : S extends `${infer F}${SEP}${infer R}`
+      ? [F, ...Split<R, SEP>]
+      : [S]
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

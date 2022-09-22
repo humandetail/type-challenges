@@ -77,8 +77,26 @@
 
 
 /* _____________ Your Code Here _____________ */
+type StoreOptions<State, Getters, Actions> = {
+  id?: string;
+  state?: () => State;
+  getters?: Getters & ThisType<Readonly<State> & {
+    readonly [P in keyof Getters]: Getters[P] extends (...args: any) => infer R
+      ? R
+      : never 
+  }>;
+  actions?: Actions & ThisType<State & {
+    readonly [P in keyof Getters]: Getters[P] extends (...args: any) => infer R
+      ? R
+      : never 
+  } & Actions>;
+}
 
-declare function defineStore(store: unknown): unknown
+declare function defineStore<State, Getters, Actions>(store: StoreOptions<State, Getters, Actions>): Readonly<State> & {
+  readonly [P in keyof Getters]: Getters[P] extends (...args: any) => infer R
+    ? R
+    : never 
+} & Actions
 
 
 /* _____________ Test Cases _____________ */

@@ -20,7 +20,9 @@
 
 /* _____________ Your Code Here _____________ */
 
-type MutableKeys<T> = any
+type MutableKeys<T> = keyof {
+  [P in keyof T as Equal<{ [K in P]: T[K] }, Readonly<{ [K in P]: T[K] }>> extends false ? P: never]: T[P]
+}
 
 
 /* _____________ Test Cases _____________ */

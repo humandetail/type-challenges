@@ -18,8 +18,15 @@
 
 
 /* _____________ Your Code Here _____________ */
+type StringToUnion<S extends string> = S extends `${infer F}${infer R}`
+  ? F | StringToUnion<R>
+  : never
 
-type DropString<S, R> = any
+type DropString<S, R extends string, U = StringToUnion<R>> = S extends `${infer F}${infer Rest}`
+  ? F extends U
+    ? DropString<Rest, R, U>
+    : `${F}${DropString<Rest, R, U>}`
+  : S
 
 
 /* _____________ Test Cases _____________ */

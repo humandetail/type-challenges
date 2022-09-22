@@ -26,8 +26,44 @@
 
 
 /* _____________ Your Code Here _____________ */
+/**
+ * UnionToFunc<1 | 2> => ((arg: 1) => void | (arg: 2) => void)
+ */
+ type UnionToFunc<T> = T extends unknown ? (arg: T) => void : never
 
-type ObjectFromEntries<T> = any
+ /**
+  * UnionToIntersection<1 | 2> = 1 & 2
+  */
+ type UnionToIntersection<U> = UnionToFunc<U> extends (arg: infer Arg) => void
+   ? Arg
+   : never
+ 
+ /**
+  * LastInUnion<1 | 2> = 2
+  */
+ type LastInUnion<U> = UnionToIntersection<UnionToFunc<U>> extends (x: infer L) => void
+   ? L
+   : never
+ 
+ type UnionToTuple<T, L = LastInUnion<T>> = [L] extends [never]
+   ? []
+   : [...UnionToTuple<Exclude<T, L>>, L]
+
+type ObjectFromEntries<T, D = UnionToTuple<T>, Result extends Record<PropertyKey, any> = {}> = D extends [infer F, ...infer R]
+  ? F extends [infer FF extends string, infer FR]
+    ? ObjectFromEntries<
+        never,
+        R,
+        {
+          [K in FF | keyof Result]: K extends FF
+            ? FR
+            : K extends keyof Result
+              ? Result[K]
+            : never
+        }
+      >
+    : never
+  : Result
 
 
 /* _____________ Test Cases _____________ */

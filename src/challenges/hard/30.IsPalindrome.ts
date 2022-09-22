@@ -19,9 +19,17 @@
 
 
 /* _____________ Your Code Here _____________ */
+type NumberToString<N extends number | string> = `${N}` extends `${infer S}`
+  ? S
+  : N
 
-type IsPalindrome<T> = any
-
+type IsPalindrome<T extends number | string, S = NumberToString<T>> = S extends `${infer F}${infer R}`
+  ? F extends S
+    ? true
+    : R extends `${infer RR}${F}`
+      ? IsPalindrome<never, RR>
+      : false
+  : false
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'

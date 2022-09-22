@@ -1162,3 +1162,1009 @@ type LengthOfString<S extends string, Result extends 0[] = []> = S extends `${in
   : Result['length']
 ```
 
+### Union to Tuple
+
+> Implement a type, `UnionToTuple`, that converts a union to a tuple.
+>
+> As we know, union is an unordered structure, but tuple is an ordered, which implies that we are not supposed to preassume any order will be preserved between terms of one union, when unions are created or transformed. 
+>
+> Hence in this challenge, **any permutation of the elements in the output tuple is acceptable**.
+>
+> Your type should resolve to one of the following two types, but ***NOT*** a union of them!
+>   ```ts
+>   UnionToTuple<1>           // [1], and correct
+>   UnionToTuple<'any' | 'a'> // ['any','a'], and correct
+>   ```
+> or 
+>   ```ts
+>   UnionToTuple<'any' | 'a'> // ['a','any'], and correct
+>   ```
+> It shouldn't be a union of all acceptable tuples...
+>   ```ts
+>   UnionToTuple<'any' | 'a'> // ['a','any'] | ['any','a'], which is incorrect
+>   ```
+>
+>
+> And a union could collapes, which means some types could absorb (or be absorbed by) others and there is no way to prevent this absorption. See the following examples:
+>   ```ts
+>   Equal<UnionToTuple<any | 'a'>,       UnionToTuple<any>>         // will always be a true
+>   Equal<UnionToTuple<unknown | 'a'>,   UnionToTuple<unknown>>     // will always be a true
+>   Equal<UnionToTuple<never | 'a'>,     UnionToTuple<'a'>>         // will always be a true
+>   Equal<UnionToTuple<'a' | 'a' | 'a'>, UnionToTuple<'a'>>         // will always be a true
+>   ```
+
+```typescript
+type UnionToTuple<T> = any
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect } from '@type-challenges/utils'
+
+type ExtractValuesOfTuple<T extends any[]> = T[keyof T & number]
+
+type cases = [
+  Expect<Equal<UnionToTuple<'a' | 'b'>['length'], 2>>,
+  Expect<Equal<ExtractValuesOfTuple<UnionToTuple<'a' | 'b'>>, 'a' | 'b'>>,
+  Expect<Equal<ExtractValuesOfTuple<UnionToTuple<'a'>>, 'a'>>,
+  Expect<Equal<ExtractValuesOfTuple<UnionToTuple<any>>, any>>,
+  Expect<Equal<ExtractValuesOfTuple<UnionToTuple<undefined | void | 1>>, void | 1>>,
+  Expect<Equal<ExtractValuesOfTuple<UnionToTuple<any | 1>>, any | 1>>,
+  Expect<Equal<ExtractValuesOfTuple<UnionToTuple<any | 1>>, any>>,
+  Expect<Equal<ExtractValuesOfTuple<UnionToTuple<'d' | 'f' | 1 | never>>, 'f' | 'd' | 1>>,
+  Expect<Equal<ExtractValuesOfTuple<UnionToTuple<[{ a: 1 }] | 1>>, [{ a: 1 }] | 1>>,
+  Expect<Equal<ExtractValuesOfTuple<UnionToTuple<never>>, never>>,
+  Expect<Equal<ExtractValuesOfTuple<UnionToTuple<'a' | 'b' | 'c' | 1 | 2 | 'd' | 'e' | 'f' | 'g'>>, 'f' | 'e' | 1 | 2 | 'g' | 'c' | 'd' | 'a' | 'b'>>,
+]
+```
+
+首先，我们需要明确在联合类型中直接取值是做不到的，所以我们需要对联合类型做一些处理，将其转为交叉类型。
+
+为什么要转为交叉类型呢？我们看下面的例子：
+
+```typescript
+type A = 'a' & 1
+
+type E1 = A extends 1 ? true : false // true
+type E2 = A extends 'a' ? true : false // true
+
+type B = ((arg: 'a') => void) & ((arg: 1) => void)
+type E3 = B extends (arg: 'a') => void ? true : false // true
+type E4 = B extends (arg: 1) => void ? true : false // true
+
+type C = B extends (arg: infer R) => void ? R : never // 1
+```
+
+我们可以发现，在交叉类型中，我们可以把该类型中最后一个值给取出来。单独值都可以提取出来了，那么组成数组也就不是什么困难的事情了。
+
+首先要做的是转成交叉类型，这个我们之前在 [Union to Intersection](# Union to Intersection) 就已经实现了：
+
+```typescript
+/**
+ * UnionToFunc<1 | 2> => ((arg: 1) => void | (arg: 2) => void)
+ */
+type UnionToFunc<T> = T extends unknown ? (arg: T) => void : never
+
+/**
+ * UnionToIntersection<1 | 2> = 1 & 2
+ */
+type UnionToIntersection<U> = UnionToFunc<U> extends (arg: infer Arg) => void
+  ? Arg
+  : never
+```
+
+然后就是取最后一个值：
+
+```typescript
+/**
+ * LastInUnion<1 | 2> = 2
+ */
+type LastInUnion<U> = UnionToIntersection<UnionToFunc<U>> extends (x: infer L) => void
+  ? L
+  : never
+```
+
+最后就是组成所需要的数组：
+
+```typescript
+type UnionToTuple<T, L = LastInUnion<T>> = [L] extends [never]
+  ? []
+  : [...UnionToTuple<Exclude<T, L>>, L]
+```
+
+### String Join
+
+> Create a type-safe string join utility which can be used like so:
+>
+>   ```ts
+>   const hyphenJoiner = join('-')
+>   const result = hyphenJoiner('a', 'b', 'c'); // = 'a-b-c'
+>   ```
+>
+> Or alternatively:
+>   ```ts
+>   join('#')('a', 'b', 'c') // = 'a#b#c'
+>   ```
+>
+> When we pass an empty delimiter (i.e '') to join, we should concat the strings as they are, i.e: 
+>   ```ts
+>   join('')('a', 'b', 'c') // = 'abc'
+>   ```
+>
+> When only one item is passed, we should get back the original item (without any delimiter added):
+>   ```ts
+>   join('-')('a') // = 'a'
+>   ```
+
+```typescript
+declare function join(delimiter: any): (...parts: any[]) => any
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect } from '@type-challenges/utils'
+
+// Edge cases
+const noCharsOutput = join('-')()
+const oneCharOutput = join('-')('a')
+const noDelimiterOutput = join('')('a', 'b', 'c')
+
+// Regular cases
+const hyphenOutput = join('-')('a', 'b', 'c')
+const hashOutput = join('#')('a', 'b', 'c')
+const twoCharOutput = join('-')('a', 'b')
+const longOutput = join('-')('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
+
+type cases = [
+  Expect<Equal<typeof noCharsOutput, ''>>,
+  Expect<Equal<typeof oneCharOutput, 'a'>>,
+  Expect<Equal<typeof noDelimiterOutput, 'abc'>>,
+  Expect<Equal<typeof twoCharOutput, 'a-b'>>,
+  Expect<Equal<typeof hyphenOutput, 'a-b-c'>>,
+  Expect<Equal<typeof hashOutput, 'a#b#c'>>,
+  Expect<Equal<typeof longOutput, 'a-b-c-d-e-f-g-h'>>,
+]
+```
+
+首先，把 Join 里面的类型约束处理好：
+
+```typescript
+declare function join<T extends string>(delimiter: T): <A extends string[] = []>(...parts: A) => JoinString<T, A>
+```
+
+然后就变成了简单的数组拼接了：
+
+```typescript
+type JoinString<
+  A extends string[],
+  T extends string,
+  Result extends string = ''
+> = A extends [infer F extends string, ...infer R extends string[]]
+  ? Result extends ''
+    ? JoinString<R, T, F>
+    : JoinString<R, T, `${Result}${T}${F}`>
+  : Result
+```
+
+### DeepPick
+
+> Implement a type DeepPick, that extends Utility types `Pick`. A type takes two arguments.
+
+```typescript
+type DeepPick = any
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect } from '@type-challenges/utils'
+
+type Obj = {
+  a: number
+  b: string
+  c: boolean
+  obj: {
+    d: number
+    e: string
+    f: boolean
+    obj2: {
+      g: number
+      h: string
+      i: boolean
+    }
+  }
+  obj3: {
+    j: number
+    k: string
+    l: boolean
+  }
+}
+
+type cases = [
+  Expect<Equal<DeepPick<Obj, ''>, unknown>>,
+  Expect<Equal<DeepPick<Obj, 'a'>, { a: number }>>,
+  Expect<Equal<DeepPick<Obj, 'a' | ''>, { a: number } & unknown>>,
+  Expect<Equal<DeepPick<Obj, 'a' | 'obj.e'>, { a: number } & { obj: { e: string } }>>,
+  Expect<Equal<DeepPick<Obj, 'a' | 'obj.e' | 'obj.obj2.i'>, { a: number } & { obj: { e: string } } & { obj: { obj2: { i: boolean } } }>>,
+]
+```
+
+我们可以看到题目中出现了 `obj.e` 、`obj.obj2.i` ，很明显，这需要通过 [Typed Get](#Typed Get) 来取值：
+
+```typescript
+type Get<T, K extends string> = K extends `${infer Key}.${infer R}`
+  ? Key extends keyof T
+    ? Get<T[Key], R>
+    : never
+  : K extends keyof T
+    ? T[K]
+    : never
+```
+
+当然，我们需要对 Get 作一些调整，因为题中是需要一些新的对象作为值：
+
+```typescript
+type Get<T, K extends string> = K extends `${infer Key}.${infer R}`
+  ? Key extends keyof T
+    ? { [P in keyof T as P extends Key ? P : never]: Get<T[Key], R> }
+    : never
+  : K extends keyof T
+    ? { [P in keyof T as P extends K ? P : never ]: T[K] }
+    : never
+```
+
+然后就是结果需要转成交叉类型：
+
+```typescript
+/**
+ * UnionToFunc<1 | 2> => ((arg: 1) => void | (arg: 2) => void)
+ */
+type UnionToFunc<T> = T extends unknown ? (arg: T) => void : never
+
+/**
+ * UnionToIntersection<1 | 2> = 1 & 2
+ */
+type UnionToIntersection<U> = UnionToFunc<U> extends (arg: infer Arg) => void
+  ? Arg
+  : never
+```
+
+最终组合起来即可：
+
+```typescript
+type DeepPick<T, K extends string> = UnionToIntersection<Get<T, K>>
+```
+
+### Pinia
+
+> Create a type-level function whose types is similar to [Pinia](https://github.com/posva/pinia) library. You don't need to implement function actually, just adding types.
+
+```typescript
+declare function defineStore(store: unknown): unknown
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect } from '@type-challenges/utils'
+
+const store = defineStore({
+  id: '',
+  state: () => ({
+    num: 0,
+    str: '',
+  }),
+  getters: {
+    stringifiedNum() {
+      // @ts-expect-error
+      this.num += 1
+
+      return this.num.toString()
+    },
+    parsedNum() {
+      return parseInt(this.stringifiedNum)
+    },
+  },
+  actions: {
+    init() {
+      this.reset()
+      this.increment()
+    },
+    increment(step = 1) {
+      this.num += step
+    },
+    reset() {
+      this.num = 0
+
+      // @ts-expect-error
+      this.parsedNum = 0
+
+      return true
+    },
+    setNum(value: number) {
+      this.num = value
+    },
+  },
+})
+
+// @ts-expect-error
+store.nopeStateProp
+// @ts-expect-error
+store.nopeGetter
+// @ts-expect-error
+store.stringifiedNum()
+store.init()
+// @ts-expect-error
+store.init(0)
+store.increment()
+store.increment(2)
+// @ts-expect-error
+store.setNum()
+// @ts-expect-error
+store.setNum('3')
+store.setNum(3)
+const r = store.reset()
+
+type _tests = [
+  Expect<Equal<typeof store.num, number>>,
+  Expect<Equal<typeof store.str, string>>,
+  Expect<Equal<typeof store.stringifiedNum, string>>,
+  Expect<Equal<typeof store.parsedNum, number>>,
+  Expect<Equal<typeof r, true>>,
+]
+```
+
+这题需要注意的是，getters 是只读的，同时在 getters 中的 state 也是只读的：
+
+```typescript
+type StoreOptions<State, Getters, Actions> = {
+  id?: string;
+  state?: () => State;
+  getters?: Getters & ThisType<Readonly<State> & {
+    readonly [P in keyof Getters]: Getters[P] extends (...args: any) => infer R
+      ? R
+      : never 
+  }>;
+  actions?: Actions & ThisType<State & {
+    readonly [P in keyof Getters]: Getters[P] extends (...args: any) => infer R
+      ? R
+      : never 
+  } & Actions>;
+}
+
+declare function defineStore<State, Getters, Actions>(store: StoreOptions<State, Getters, Actions>): Readonly<State> & {
+  readonly [P in keyof Getters]: Getters[P] extends (...args: any) => infer R
+    ? R
+    : never 
+} & Actions
+```
+
+### Camelize
+
+> Implement Camelize which converts object from snake_case to to camelCase
+
+```typescript
+type Camelize<T> = any
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect } from '@type-challenges/utils'
+
+type cases = [
+  Expect<Equal<
+    Camelize<{
+      some_prop: string
+      prop: { another_prop: string }
+      array: [
+        { snake_case: string },
+        { another_element: { yet_another_prop: string } },
+        { yet_another_element: string },
+      ]
+    }>,
+    {
+      someProp: string
+      prop: { anotherProp: string }
+      array: [
+        { snakeCase: string },
+        { anotherElement: { yetAnotherProp: string } },
+        { yetAnotherElement: string },
+      ]
+    }
+  >>,
+]
+```
+
+首先需要实现一个将字符串转小陀峰的辅助类：
+
+```typescript
+type CamelizeKey<K> = K extends `${infer F}_${infer R}`
+  ? `${F}${CamelizeKey<Capitalize<R>>}`
+  : K
+```
+
+然后区分 Tuple 和 Interface，逐一处理即可：
+
+```typescript
+type Camelize<T> = T extends unknown[]
+  ? T extends [infer F, ...infer R]
+    ? [Camelize<F>, ...Camelize<R>]
+    : []
+  : {
+    [P in keyof T as CamelizeKey<P>]: T[P] extends object
+      ? Camelize<T[P]>
+      : T[P]
+  }
+```
+
+### Drop String
+
+> Drop the specified chars from a string.
+
+```typescript
+type DropString<S, R> = any
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect } from '@type-challenges/utils'
+
+type cases = [
+  Expect<Equal<DropString<'butter fly!', ''>, 'butter fly!'>>,
+  Expect<Equal<DropString<'butter fly!', ' '>, 'butterfly!'>>,
+  Expect<Equal<DropString<'butter fly!', 'but'>, 'er fly!'>>,
+  Expect<Equal<DropString<' b u t t e r f l y ! ', 'but'>, '     e r f l y ! '>>,
+  Expect<Equal<DropString<'    butter fly!        ', ' '>, 'butterfly!'>>,
+  Expect<Equal<DropString<' b u t t e r f l y ! ', ' '>, 'butterfly!'>>,
+  Expect<Equal<DropString<' b u t t e r f l y ! ', 'but'>, '     e r f l y ! '>>,
+  Expect<Equal<DropString<' b u t t e r f l y ! ', 'tub'>, '     e r f l y ! '>>,
+  Expect<Equal<DropString<' b u t t e r f l y ! ', 'b'>, '  u t t e r f l y ! '>>,
+  Expect<Equal<DropString<' b u t t e r f l y ! ', 't'>, ' b u   e r f l y ! '>>,
+]
+```
+
+需要一个 StringToUnion 的辅助类型：
+
+```typescript
+type StringToUnion<S extends string> = S extends `${infer F}${infer R}`
+  ? F | StringToUnion<R>
+  : never
+```
+
+然后就是字符串操作：
+
+```typescript
+type DropString<S, R extends string, U = StringToUnion<R>> = S extends `${infer F}${infer Rest}`
+  ? F extends U
+    ? DropString<Rest, R, U>
+    : `${F}${DropString<Rest, R, U>}`
+  : S
+```
+
+### Split
+
+> The well known `split()` method splits a string into an array of substrings by looking for a separator, and returns the new array. The goal of this challenge is to split a string, by using a separator, but in the type system!
+
+```typescript
+type Split<S extends string, SEP extends string> = any
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect } from '@type-challenges/utils'
+
+type cases = [
+  Expect<Equal<Split<'Hi! How are you?', 'z'>, ['Hi! How are you?']>>,
+  Expect<Equal<Split<'Hi! How are you?', ' '>, ['Hi!', 'How', 'are', 'you?']>>,
+  Expect<Equal<Split<'Hi! How are you?', ''>, ['H', 'i', '!', ' ', 'H', 'o', 'w', ' ', 'a', 'r', 'e', ' ', 'y', 'o', 'u', '?']>>,
+  Expect<Equal<Split<'', ''>, []>>,
+  Expect<Equal<Split<'', 'z'>, ['']>>,
+  Expect<Equal<Split<string, 'whatever'>, string[]>>,
+]
+```
+
+字符串分隔，也是比较简单的操作：
+
+```typescript
+type Split<S extends string, SEP extends string> = SEP extends ''
+  ? S extends `${infer F}${infer R}`
+    ? [F, ...Split<R, SEP>]
+    : []
+  : SEP extends S
+    ? S[]
+    : S extends `${infer F}${SEP}${infer R}`
+      ? [F, ...Split<R, SEP>]
+      : [S]
+```
+
+### ClassPublicKeys
+
+> Implement the generic `ClassPublicKeys<T>` which returns all public keys of a class.
+
+```typescript
+type ClassPublicKeys = any
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect } from '@type-challenges/utils'
+
+class A {
+  public str: string
+  protected num: number
+  private bool: boolean
+  constructor() {
+    this.str = 'naive'
+    this.num = 19260917
+    this.bool = true
+  }
+
+  getNum() {
+    return Math.random()
+  }
+}
+
+type cases = [
+  Expect<Equal<ClassPublicKeys<A>, 'str' | 'getNum'>>,
+]
+```
+
+只需要 keyof 即可：
+
+```typescript
+type ClassPublicKeys<T> = keyof T
+```
+
+### IsRequiredKey
+
+> Implement a generic ```IsRequiredKey<T, K>```  that return whether ```K``` are required keys of ```T``` .
+
+```typescript
+type IsRequiredKey<T, K extends keyof T> = any
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect } from '@type-challenges/utils'
+
+type cases = [
+  Expect<Equal<IsRequiredKey<{ a: number; b?: string }, 'a'>, true>>,
+  Expect<Equal<IsRequiredKey<{ a: number; b?: string }, 'b'>, false>>,
+  Expect<Equal<IsRequiredKey<{ a: number; b?: string }, 'b' | 'a'>, false>>,
+]
+```
+
+只需要利用 [Required Keys](#Required Keys) 的知识即可：
+
+```typescript
+type RequiredKeys<T> = keyof {
+  [P in keyof T as Omit<T, P> extends T ? never : P]: T[P]
+}
+
+type IsRequiredKey<T, K extends keyof T> = Equal<RequiredKeys<T>, K>
+```
+
+### ObjectFromEntries
+
+> Implement the type version of ```Object.fromEntries```
+
+```typescript
+type ObjectFromEntries<T> = any
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect } from '@type-challenges/utils'
+
+interface Model {
+  name: string
+  age: number
+  locations: string[] | null
+}
+
+type ModelEntries = ['name', string] | ['age', number] | ['locations', string[] | null]
+
+type cases = [
+  Expect<Equal<ObjectFromEntries<ModelEntries>, Model>>,
+]
+```
+
+我的想法很简单，先把联合类型转成二维数组，然后就是普通的数组操作收集结果即可：
+
+```typescript
+/**
+ * UnionToFunc<1 | 2> => ((arg: 1) => void | (arg: 2) => void)
+ */
+ type UnionToFunc<T> = T extends unknown ? (arg: T) => void : never
+
+ /**
+  * UnionToIntersection<1 | 2> = 1 & 2
+  */
+ type UnionToIntersection<U> = UnionToFunc<U> extends (arg: infer Arg) => void
+   ? Arg
+   : never
+ 
+ /**
+  * LastInUnion<1 | 2> = 2
+  */
+ type LastInUnion<U> = UnionToIntersection<UnionToFunc<U>> extends (x: infer L) => void
+   ? L
+   : never
+ 
+ type UnionToTuple<T, L = LastInUnion<T>> = [L] extends [never]
+   ? []
+   : [...UnionToTuple<Exclude<T, L>>, L]
+
+type ObjectFromEntries<T, D = UnionToTuple<T>, Result extends Record<PropertyKey, any> = {}> = D extends [infer F, ...infer R]
+  ? F extends [infer FF extends string, infer FR]
+    ? ObjectFromEntries<
+        never,
+        R,
+        {
+          [K in FF | keyof Result]: K extends FF
+            ? FR
+            : K extends keyof Result
+              ? Result[K]
+            : never
+        }
+      >
+    : never
+  : Result
+```
+
+### IsPalindrome
+
+> Implement type ```IsPalindrome<T>``` to check whether  a string or number is palindrome.
+
+```typescript
+type IsPalindrome<T> = any
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect } from '@type-challenges/utils'
+
+type cases = [
+  Expect<Equal<IsPalindrome<'abc'>, false>>,
+  Expect<Equal<IsPalindrome<'b'>, true>>,
+  Expect<Equal<IsPalindrome<'abca'>, false>>,
+  Expect<Equal<IsPalindrome<'abcba'>, true>>,
+  Expect<Equal<IsPalindrome<121>, true>>,
+  Expect<Equal<IsPalindrome<19260817>, false>>,
+]
+```
+
+首先我们需要把数字转成字符串：
+
+```typescript
+type NumberToString<N extends number | string> = `${N}` extends `${infer S}`
+  ? S
+  : N
+```
+
+然后就是头尾对比即可：
+
+```typescript
+type IsPalindrome<T extends number | string, S = NumberToString<T>> = S extends `${infer F}${infer R}`
+  ? F extends S
+    ? true
+    : R extends `${infer RR}${F}`
+      ? IsPalindrome<never, RR>
+      : false
+  : false
+```
+
+### Mutable Keys
+
+> Implement the advanced util type MutableKeys<T>, which picks all the mutable (not readonly) keys into a union.
+
+```typescript
+type MutableKeys<T> = any
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect } from '@type-challenges/utils'
+
+type cases = [
+  Expect<Equal<MutableKeys<{ a: number; readonly b: string }>, 'a'>>,
+  Expect<Equal<MutableKeys<{ a: undefined; readonly b: undefined }>, 'a'>>,
+  Expect<Equal<MutableKeys<{ a: undefined; readonly b?: undefined; c: string; d: null }>, 'a' | 'c' | 'd'>>,
+  Expect<Equal<MutableKeys<{}>, never>>,
+]
+```
+
+只需要在取键时拿 Readonly 包裹后的值对比即可：
+
+```typescript
+type MutableKeys<T> = keyof {
+  [P in keyof T as Equal<{ [K in P]: T[K] }, Readonly<{ [K in P]: T[K] }>> extends false ? P: never]: T[P]
+}
+```
+
+### Intersection
+
+> Implement the type version of Lodash.intersection with a little difference. Intersection<T> takes an Array T containing several arrays or any type element including the union type, and returns a new union containing all intersection elements.
+
+```typescript
+type Intersection<T> = any
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect } from '@type-challenges/utils'
+
+type cases = [
+  Expect<Equal<Intersection<[[1, 2], [2, 3], [2, 2]]>, 2>>,
+  Expect<Equal<Intersection<[[1, 2, 3], [2, 3, 4], [2, 2, 3]]>, 2 | 3>>,
+  Expect<Equal<Intersection<[[1, 2], [3, 4], [5, 6]]>, never>>,
+  Expect<Equal<Intersection<[[1, 2, 3], [2, 3, 4], 3]>, 3>>,
+  Expect<Equal<Intersection<[[1, 2, 3], 2 | 3 | 4, 2 | 3]>, 2 | 3>>,
+  Expect<Equal<Intersection<[[1, 2, 3], 2, 3]>, never>>,
+]
+```
+
+这题可以利用 Extract 来获取交集，不过需要注意的一点是：
+
+```typescript
+type A = Extract<1 | 2, unknown> // 1 | 2
+type B = Extract<1 | 2, never> // never
+type C = Extract<unknown, 1 | 2> // never
+```
+
+答案如下：
+
+```typescript
+type Intersection<T> = T extends [infer F, ...infer R]
+  ? F extends unknown[]
+    ? Extract<F[number], Intersection<R>>
+    : Extract<F, Intersection<R>>
+  : unknown
+```
+
+### Binary to Decimal
+
+> Implement `BinaryToDecimal<S>` which takes an exact string type `S` consisting 0 and 1 and returns an exact number type corresponding with `S` when `S` is regarded as a binary.
+>
+> You can assume that the length of `S` is equal to or less than 8 and `S` is not empty.
+
+```typescript
+type BinaryToDecimal<S extends string> = any
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect } from '@type-challenges/utils'
+
+type cases = [
+  Expect<Equal<BinaryToDecimal<'10'>, 2>>,
+  Expect<Equal<BinaryToDecimal<'0011'>, 3>>,
+  Expect<Equal<BinaryToDecimal<'00000000'>, 0>>,
+  Expect<Equal<BinaryToDecimal<'11111111'>, 255>>,
+  Expect<Equal<BinaryToDecimal<'10101010'>, 170>>,
+]
+```
+
+这题还是比较简单的，我们之前实现过快速生成指定长度数组的方法：
+
+```typescript
+type NumberToArray<N extends number, Result extends 0[] = []> = Result['length'] extends N
+  ? Result
+  : NumberToArray<N, [...Result, 0]>
+
+type GetTwice<T extends unknown[]> = [
+  ...T, ...T
+]
+
+type BinaryToDecimal<S extends string, Result extends unknown[] = []> = S extends `${infer F extends number}${infer R}`
+  ? BinaryToDecimal<R, [...GetTwice<Result>, ...NumberToArray<F>]>
+  : Result['length']
+```
+
+### Object Key Paths
+
+> Get all possible paths that could be called by [_.get](https://lodash.com/docs/4.17.15#get) (a lodash function) to get the value of an object
+
+```typescript
+type ObjectKeyPaths<T extends object> = any
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect, ExpectExtends } from '@type-challenges/utils'
+
+const ref = {
+  count: 1,
+  person: {
+    name: 'cattchen',
+    age: 22,
+    books: ['book1', 'book2'],
+    pets: [
+      {
+        type: 'cat',
+      },
+    ],
+  },
+}
+
+type cases = [
+  Expect<Equal<ObjectKeyPaths<{ name: string; age: number }>, 'name' | 'age'>>,
+  Expect<
+  Equal<
+  ObjectKeyPaths<{
+    refCount: number
+    person: { name: string; age: number }
+  }>,
+  'refCount' | 'person' | 'person.name' | 'person.age'
+  >
+  >,
+  Expect<ExpectExtends<ObjectKeyPaths<typeof ref>, 'count'>>,
+  Expect<ExpectExtends<ObjectKeyPaths<typeof ref>, 'person'>>,
+  Expect<ExpectExtends<ObjectKeyPaths<typeof ref>, 'person.name'>>,
+  Expect<ExpectExtends<ObjectKeyPaths<typeof ref>, 'person.age'>>,
+  Expect<ExpectExtends<ObjectKeyPaths<typeof ref>, 'person.books'>>,
+  Expect<ExpectExtends<ObjectKeyPaths<typeof ref>, 'person.pets'>>,
+  Expect<ExpectExtends<ObjectKeyPaths<typeof ref>, 'person.books.0'>>,
+  Expect<ExpectExtends<ObjectKeyPaths<typeof ref>, 'person.books.1'>>,
+  Expect<ExpectExtends<ObjectKeyPaths<typeof ref>, 'person.books[0]'>>,
+  Expect<ExpectExtends<ObjectKeyPaths<typeof ref>, 'person.books.[0]'>>,
+  Expect<ExpectExtends<ObjectKeyPaths<typeof ref>, 'person.pets.0.type'>>,
+  Expect<Equal<ExpectExtends<ObjectKeyPaths<typeof ref>, 'notExist'>, false>>,
+  Expect<Equal<ExpectExtends<ObjectKeyPaths<typeof ref>, 'person.notExist'>, false>>,
+  Expect<Equal<ExpectExtends<ObjectKeyPaths<typeof ref>, 'person.name.'>, false>>,
+  Expect<Equal<ExpectExtends<ObjectKeyPaths<typeof ref>, '.person.name'>, false>>,
+  Expect<Equal<ExpectExtends<ObjectKeyPaths<typeof ref>, 'person.pets.[0]type'>, false>>,
+]
+```
+
+首先需要一个辅助类型来实现路径拼接，需要注意的是路径有 `a.b` 、`a.[0]`、`a[0]` 这几种款式：
+
+```typescript
+type GetPath<K extends PropertyKey & (string | number), Prefix extends string = ''> = [Prefix] extends [never]
+  ? `${K}`
+  : K extends number
+    ? `${Prefix}.${K}` | `${Prefix}[${K}]` | `${Prefix}.[${K}]`
+    : `${Prefix}.${K}`
+```
+
+接下来是对对象进行深度递归并取出它们的 key 作为最终结果：
+
+```typescript
+type ObjectKeyPaths<T extends object, Result extends string = never> = Result | {
+  [P in keyof T & (string | number)]: T[P] extends object
+    ? ObjectKeyPaths<T[P], GetPath<P, Result>>
+    : GetPath<P, Result>
+}[keyof T & (string | number)]
+```
+
+### Two Sum
+
+> Given an array of integers `nums` and an integer `target`, return true if two numbers such that they add up to `target`.
+
+```typescript
+type TwoSum<T extends number[], U extends number> = any
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect } from '@type-challenges/utils'
+
+type cases = [
+  Expect<Equal<TwoSum<[3, 3], 6>, true>>,
+  Expect<Equal<TwoSum<[3, 2, 4], 6>, true>>,
+  Expect<Equal<TwoSum<[2, 7, 11, 15], 15>, false>>,
+  Expect<Equal<TwoSum<[2, 7, 11, 15], 9>, true>>,
+  Expect<Equal<TwoSum<[1, 2, 3], 0>, false>>,
+  Expect<Equal<TwoSum<[1, 2, 3], 1>, false>>,
+  Expect<Equal<TwoSum<[1, 2, 3], 2>, false>>,
+  Expect<Equal<TwoSum<[1, 2, 3], 3>, true>>,
+  Expect<Equal<TwoSum<[1, 2, 3], 4>, true>>,
+  Expect<Equal<TwoSum<[1, 2, 3], 5>, true>>,
+  Expect<Equal<TwoSum<[1, 2, 3], 6>, false>>,
+]
+```
+
+这题需要一些辅助函数：
+
+```typescript
+/**
+ * NumberToArray<1> // [0]
+ * NumberToArray<2> // [0, 0]
+ */
+type NumberToArray<N extends number, Result extends 0[] = []> = Result['length'] extends N
+  ? Result
+  : NumberToArray<N, [0, ...Result]>
+
+/**
+ * Sum<1, 2> // 3
+ */
+type Sum<A extends number, B extends number> = [...NumberToArray<A>, ...NumberToArray<B>]['length']
+
+/**
+ * EachSum<[1, 2], 3> // [4, 5]
+ */
+type EachSum<T extends number[], N extends number, Result extends number[] = []> = T extends [infer F extends number, ...infer R extends number[]]
+  ? EachSum<R, N, [...Result, Sum<F, N> & number]>
+  : Result
+
+/**
+ * GetResult<[1, 2, 3]> // [3, 4, 5]
+ */
+type GetResult<T extends number[], Result extends number[] = []> = T extends [infer F extends number, ...infer R extends number[]]
+  ? GetResult<R, [...Result, ...EachSum<R, F>]>
+  : Result
+```
+
+然后就是调用即可：
+
+```typescript
+type TwoSum<T extends number[], U extends number> = U extends GetResult<T>[number] ? true : false
+```
+
+### ValidDate
+
+> Implement a type `ValidDate`, which takes an input type T and returns whether T is a valid date.
+
+```typescript
+type ValidDate<T extends string> = any
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect } from '@type-challenges/utils'
+
+type cases = [
+  Expect<Equal<ValidDate<'0102'>, true>>,
+  Expect<Equal<ValidDate<'0131'>, true>>,
+  Expect<Equal<ValidDate<'1231'>, true>>,
+  Expect<Equal<ValidDate<'0229'>, false>>,
+  Expect<Equal<ValidDate<'0100'>, false>>,
+  Expect<Equal<ValidDate<'0132'>, false>>,
+  Expect<Equal<ValidDate<'1301'>, false>>,
+  Expect<Equal<ValidDate<'0123'>, true>>,
+  Expect<Equal<ValidDate<'01234'>, false>>,
+  Expect<Equal<ValidDate<''>, false>>,
+]
+```
+
+这题我用了一车的辅助类型来完成：
+
+```typescript
+/**
+ * StringToNumber<'01'> // 1
+ * StringToNumber<'1'> // 1
+ * SttringToNumber<''> // 0
+ */
+type StringToNumber<T extends string> = T extends `0${infer R extends number}`
+  ? R
+  : T extends `${infer R extends number}`
+    ? R
+    : 0
+
+type PlusOne<T extends number, R extends 0[] = []> = R['length'] extends T
+  ? [0, ...R]['length']
+  : PlusOne<T, [0, ...R]>
+
+/**
+ * GetDateAndMonth<'0'> // [0, 0]
+ * GetDateAndMonth<'0123'> // [1, 23]
+ * GetDateAndMonth<'01234'> // [1, 234]
+ */
+type GetDateAndMonth<T extends string, C extends number = 0, Date extends string = '', Month extends string = ''> = C extends 2
+  ? [StringToNumber<Date>, StringToNumber<T>]
+  : T extends `${infer F}${infer R}`
+    ? GetDateAndMonth<R, PlusOne<C>, `${Date}${F}`>
+    : [StringToNumber<Date>, StringToNumber<Month>]
+
+type NumberToTuple<T extends number, Res extends 0[] = []> = Res['length'] extends T
+  ? Res
+  : NumberToTuple<T, [...Res, 0]>
+  
+type MinusOne<T extends number, Res extends 0[] = NumberToTuple<T>> = Res extends [infer F, ...infer R]
+  ? R['length']
+  : never
+  
+type GT<T extends number, U extends number> = T extends U
+  ? true
+  : T extends 0
+    ? false
+    : GT<MinusOne<T>, U>
+
+/**
+ * GreaterThan<1, 2> // false
+ * GreaterThan<2, 2> // false
+ * GreaterThan<3, 2> // true
+ */
+type GreaterThan<T extends number, U extends number> = Equal<T, U> extends true
+  ? false
+  : GT<T, U>
+
+/**
+ * InRange<2, 1, 2> // false
+ * InRange<2, 1, 3> // true
+ */
+type InRange<A extends number, F extends number, R extends number> = GreaterThan<A, F> extends true
+  ? GreaterThan<R, A> extends true
+    ? true
+    : false
+  : false
+```
+
+最终：
+
+```typescript
+type ValidDate<T extends string, A extends [number, number] = GetDateAndMonth<T>> = InRange<A[0], 0, 13> extends true
+  ? A[0] extends 2
+    ? InRange<A[1], 0, 29> extends true
+      ? true
+      : false
+    : InRange<A[1], 0, 32> extends true
+      ? true
+      : false
+  : false
+```
+

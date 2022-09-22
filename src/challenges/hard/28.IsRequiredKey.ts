@@ -20,8 +20,11 @@
 
 
 /* _____________ Your Code Here _____________ */
+type RequiredKeys<T> = keyof {
+  [P in keyof T as Omit<T, P> extends T ? never : P]: T[P]
+}
 
-type IsRequiredKey<T, K extends keyof T> = any
+type IsRequiredKey<T, K extends keyof T> = Equal<RequiredKeys<T>, K>
 
 
 /* _____________ Test Cases _____________ */
