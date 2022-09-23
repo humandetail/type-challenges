@@ -25,8 +25,9 @@
 
 /* _____________ Your Code Here _____________ */
 
-type GetReadonlyKeys<T> = any
-
+type GetReadonlyKeys<T> = keyof {
+  [P in keyof T as Equal<{ [K in P]: T[K] }, Readonly<{ [K in P]: T[K] }>> extends false ? never: P]: T[P]
+}
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'
