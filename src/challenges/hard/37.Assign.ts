@@ -60,8 +60,30 @@
 
 
 /* _____________ Your Code Here _____________ */
+type AllowArgs<T extends unknown[], Result extends Record<string, unknown>[] = []> = T extends [infer F, ...infer R]
+  ? F extends Record<string, unknown>
+    ? AllowArgs<R, [...Result, F]>
+    : AllowArgs<R, Result>
+  : Result
 
-type Assign<T extends Record<string, unknown>, U> = any
+type MergeInterface<
+  T extends Record<string, unknown>,
+  D extends Record<string, unknown>
+> = {
+  [P in keyof T | keyof D]: P extends keyof D
+    ? D[P]
+    : P extends keyof T
+      ? T[P]
+      : never
+}
+
+type Assign<
+  T extends Record<string, unknown>,
+  U extends unknown[],
+  D extends Record<string, unknown>[] = AllowArgs<U>
+> = D extends [infer F extends Record<string, unknown>, ...infer R extends Record<string, unknown>[]]
+  ? Assign<MergeInterface<T, F>, never, R>
+  : T
 
 
 /* _____________ Test Cases _____________ */

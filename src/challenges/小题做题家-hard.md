@@ -2168,3 +2168,307 @@ type ValidDate<T extends string, A extends [number, number] = GetDateAndMonth<T>
   : false
 ```
 
+### Assign
+
+> You have a target object and a source array of objects. You need to copy property from source to target, if it has the same property as the source, you should always keep the source property, and drop the target property. (Inspired by the `Object.assign` API)
+
+```typescript
+type Assign<T extends Record<string, unknown>, U> = any
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect } from '@type-challenges/utils'
+
+// case1
+type Case1Target = {}
+
+type Case1Origin1 = {
+  a: 'a'
+}
+
+type Case1Origin2 = {
+  b: 'b'
+}
+
+type Case1Origin3 = {
+  c: 'c'
+}
+
+type Case1Answer = {
+  a: 'a'
+  b: 'b'
+  c: 'c'
+}
+
+// case2
+type Case2Target = {
+  a: [1, 2, 3]
+}
+
+type Case2Origin1 = {
+  a: {
+    a1: 'a1'
+  }
+}
+
+type Case2Origin2 = {
+  b: [2, 3, 3]
+}
+
+type Case2Answer = {
+  a: {
+    a1: 'a1'
+  }
+  b: [2, 3, 3]
+}
+
+// case3
+
+type Case3Target = {
+  a: 1
+  b: ['b']
+}
+
+type Case3Origin1 = {
+  a: 2
+  b: {
+    b: 'b'
+  }
+  c: 'c1'
+}
+
+type Case3Origin2 = {
+  a: 3
+  c: 'c2'
+  d: true
+}
+
+type Case3Answer = {
+  a: 3
+  b: {
+    b: 'b'
+  }
+  c: 'c2'
+  d: true
+}
+
+// case 4
+type Case4Target = {
+  a: 1
+  b: ['b']
+}
+
+type Case4Answer = {
+  a: 1
+  b: ['b']
+}
+
+type cases = [
+  Expect<Equal<Assign<Case1Target, [Case1Origin1, Case1Origin2, Case1Origin3]>, Case1Answer>>,
+  Expect<Equal<Assign<Case2Target, [Case2Origin1, Case2Origin2]>, Case2Answer>>,
+  Expect<Equal<Assign<Case3Target, [Case3Origin1, Case3Origin2]>, Case3Answer>>,
+  Expect<Equal<Assign<Case4Target, ['', 0]>, Case4Answer>>,
+]
+```
+
+这题还是比较简单的，首先需要把不符合的数组项给过滤掉：
+
+```typescript
+type AllowArgs<T extends unknown[], Result extends Record<string, unknown>[] = []> = T extends [infer F, ...infer R]
+  ? F extends Record<string, unknown>
+    ? AllowArgs<R, [...Result, F]>
+    : AllowArgs<R, Result>
+  : Result
+```
+
+然后就是逐个处理数组的每一项进行合并即可：
+
+```typescript
+type MergeInterface<
+  T extends Record<string, unknown>,
+  D extends Record<string, unknown>
+> = {
+  [P in keyof T | keyof D]: P extends keyof D
+    ? D[P]
+    : P extends keyof T
+      ? T[P]
+      : never
+}
+
+type Assign<
+  T extends Record<string, unknown>,
+  U extends unknown[],
+  D extends Record<string, unknown>[] = AllowArgs<U>
+> = D extends [infer F extends Record<string, unknown>, ...infer R extends Record<string, unknown>[]]
+  ? Assign<MergeInterface<T, F>, never, R>
+  : T
+```
+
+这里需要注意的是，后面的键要覆盖前面相同的键。
+
+### Capitalize Nest Object Keys
+
+> Capitalize the key of the object, and if the value is an array, iterate through the objects in the array.
+
+```typescript
+type CapitalizeNestObjectKeys<T> = any
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect } from '@type-challenges/utils'
+import { ExpectFalse, NotEqual } from '@type-challenges/utils'
+
+type foo = {
+  foo: string
+  bars: [{ foo: string }]
+}
+
+type Foo = {
+  Foo: string
+  Bars: [{
+    Foo: string
+  }]
+}
+
+type cases = [
+  Expect<Equal<Foo, CapitalizeNestObjectKeys<foo>>>,
+]
+```
+
+这题也比较容易处理：
+
+```typescript
+type EachCapitalize<T extends unknown[]> = T extends [infer F, ...infer R]
+  ? [CapitalizeNestObjectKeys<F>, ...EachCapitalize<R>]
+  : []
+
+type CapitalizeNestObjectKeys<T> = {
+  [K in keyof T as K extends string ? Capitalize<K> : never]: T[K] extends unknown[]
+    ? EachCapitalize<T[K]>
+    : T[K] extends Record<string, unknown>
+      ? CapitalizeNestObjectKeys<T[K]>
+      : T[K]
+}
+```
+
+### Run-length encoding
+
+> Given a `string` sequence of a letters f.e. `AAABCCXXXXXXY`. Return run-length encoded string `3AB2C6XY`.
+>
+> Also make a decoder for that string.
+
+```typescript
+namespace RLE {
+  export type Encode<S extends string> = any
+  export type Decode<S extends string> = any
+}
+
+/* _____________ Test Cases _____________ */
+import type { Equal, Expect } from '@type-challenges/utils'
+
+type cases = [
+  // Raw string -> encoded string
+  Expect<Equal<RLE.Encode<'AAABCCXXXXXXY'>, '3AB2C6XY'>>,
+
+  // Encoded string -> decoded string
+  Expect<Equal<RLE.Decode<'3AB2C6XY'>, 'AAABCCXXXXXXY'>>,
+]
+```
+
+首先是 Encode 的处理，借助一个缓存的数组来完成相同字符的收集：
+
+```typescript
+type Encode<
+    S extends string,
+    Cache extends string[] = [],
+    Result extends string = ''
+  > = S extends `${infer F}${infer R}`
+    ? Cache extends []
+      ? Encode<R, [...Cache, F], Result>
+      : Cache[0] extends F
+        ? Encode<R, [...Cache, F], Result>
+        : Encode<R, [F], `${Result}${Cache['length'] extends 1 ? '' : Cache['length']}${Cache[0]}`>
+    : `${Result}${Cache[0]}`
+```
+
+接下来是 Decode 的处理，需要一些辅助类型：
+
+```typescript
+/**
+ * ParseInt<'A'> // never
+ * ParseInt<'1'> // 1
+ */
+type ParseInt<T extends string> = T extends `${infer R extends number}`
+  ? R
+  : never
+
+/**
+ * FillString<'A', 0> // ''
+ * FillString<'A', 1> // 'A'
+ * FillString<'A', 3> // 'AAA'
+ */
+type FillString<T extends string, L extends number, R extends T[] = [], To extends string = ''> = R['length'] extends L
+  ? To
+  : FillString<T, L, [T, ...R], `${To}${T}`>
+```
+
+最后就是收集 Number 用于填充即可：
+
+```typescript
+type Decode<
+    S extends string,
+    N extends number = never,
+    Result extends string = ''
+  > = S extends `${infer F}${infer R}`
+    ? [ParseInt<F>] extends [never]
+      ? [N] extends [never]
+        ? Decode<R, never, `${Result}${F}`>
+        : Decode<R, never, `${Result}${FillString<F, N>}`>
+      : Decode<R, ParseInt<F>, Result>
+    : Result
+```
+
+完整答案如下：
+
+```typescript
+/**
+ * ParseInt<'A'> // never
+ * ParseInt<'1'> // 1
+ */
+type ParseInt<T extends string> = T extends `${infer R extends number}`
+  ? R
+  : never
+
+/**
+ * FillString<'A', 0> // ''
+ * FillString<'A', 1> // 'A'
+ * FillString<'A', 3> // 'AAA'
+ */
+type FillString<T extends string, L extends number, R extends T[] = [], To extends string = ''> = R['length'] extends L
+  ? To
+  : FillString<T, L, [T, ...R], `${To}${T}`>
+namespace RLE {
+  export type Encode<
+    S extends string,
+    Cache extends string[] = [],
+    Result extends string = ''
+  > = S extends `${infer F}${infer R}`
+    ? Cache extends []
+      ? Encode<R, [...Cache, F], Result>
+      : Cache[0] extends F
+        ? Encode<R, [...Cache, F], Result>
+        : Encode<R, [F], `${Result}${Cache['length'] extends 1 ? '' : Cache['length']}${Cache[0]}`>
+    : `${Result}${Cache[0]}`
+
+  export type Decode<
+    S extends string,
+    N extends number = never,
+    Result extends string = ''
+  > = S extends `${infer F}${infer R}`
+    ? [ParseInt<F>] extends [never]
+      ? [N] extends [never]
+        ? Decode<R, never, `${Result}${F}`>
+        : Decode<R, never, `${Result}${FillString<F, N>}`>
+      : Decode<R, ParseInt<F>, Result>
+    : Result
+}
+```
+

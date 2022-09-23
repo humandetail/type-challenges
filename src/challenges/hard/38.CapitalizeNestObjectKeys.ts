@@ -12,8 +12,17 @@
 
 
 /* _____________ Your Code Here _____________ */
+type EachCapitalize<T extends unknown[]> = T extends [infer F, ...infer R]
+  ? [CapitalizeNestObjectKeys<F>, ...EachCapitalize<R>]
+  : []
 
-type CapitalizeNestObjectKeys<T> = any
+type CapitalizeNestObjectKeys<T> = {
+  [K in keyof T as K extends string ? Capitalize<K> : never]: T[K] extends unknown[]
+    ? EachCapitalize<T[K]>
+    : T[K] extends Record<string, unknown>
+      ? CapitalizeNestObjectKeys<T[K]>
+      : T[K]
+}
 
 
 /* _____________ Test Cases _____________ */
