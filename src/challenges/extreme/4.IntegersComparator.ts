@@ -18,14 +18,46 @@
 
 
 /* _____________ Your Code Here _____________ */
-
 enum Comparison {
   Greater,
   Equal,
   Lower,
 }
 
-type Comparator<A extends number, B extends number> = any
+type NumberToTuple<T extends number, Result extends 0[] = []> = Result['length'] extends T
+  ? Result
+  : NumberToTuple<T, [0, ...Result]>
+
+type MinusOne<T extends number, Result extends 0[] = NumberToTuple<T>> = Result extends [infer F, ...infer R]
+  ? R['length']
+  : 0
+
+type GT<T extends number, D extends number, E extends boolean = T extends D ? true : false> = E extends true ? false : T extends D
+  ? true
+  : T extends 0
+    ? false
+    : GT<MinusOne<T>, D, false>
+
+type IsNegative<T extends number> = `${T}` extends `-${infer R extends number}`
+  ? true
+  : false
+
+type ABS<T extends number> = `${T}` extends `-${infer R extends number}`
+  ? R
+  : T
+
+type Comparator<A extends number, B extends number> = A extends B
+  ? Comparison.Equal
+  : IsNegative<A> extends true
+    ? IsNegative<B> extends true
+      ? Comparator<ABS<B>, ABS<A>>
+      : Comparison.Lower
+    : IsNegative<B> extends true
+      ? Comparison.Greater
+      : GT<A, B> extends true
+        ? Comparison.Greater
+        : Comparison.Lower
+
 
 
 /* _____________ Test Cases _____________ */

@@ -38,9 +38,14 @@
 
 
 /* _____________ Your Code Here _____________ */
-
-declare function DynamicParamsCurrying(fn: any): any
-
+declare function DynamicParamsCurrying<
+  T extends unknown[],
+  R
+>(fn: (...args: T) => R): T extends []
+  ? R
+  : <D extends unknown[]>(...args: D) => T extends [...D, ...infer Rest]
+    ? ReturnType<typeof DynamicParamsCurrying<Rest, R>>
+    : never
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'
