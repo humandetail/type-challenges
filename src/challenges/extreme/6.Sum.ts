@@ -21,9 +21,74 @@
 
 
 /* _____________ Your Code Here _____________ */
+type ParamType = string | number | bigint
 
-type Sum<A extends string | number | bigint, B extends string | number | bigint> = string
+type NumberToTuple<T extends number, R extends 0[] = []> = R['length'] extends T
+  ? R
+  : NumberToTuple<T, [0, ...R]>
 
+/**
+ * Split<12> // [1, 2]
+ * Split<'1'> // [1]
+ */
+type Split<S extends ParamType, Result extends number[] = []> = `${S}` extends `${infer F extends number}${infer R}`
+  ? Split<R, [...Result, F]>
+  : Result
+
+/**
+ * SingleSum<1, 2> // 3
+ * SingleSum<4, 8> // 12
+ */
+type SingleSum<T extends number, D extends number> = [...NumberToTuple<T>, ...NumberToTuple<D>]['length'] & number
+
+/**
+ * GetRest<[1, 2, 3]> // [1, 2]
+ * GetRest<[1]> // []
+ */
+type GetRest<T> = T extends [...infer R, infer L extends number]
+  ? R
+  : []
+
+type Pop<T> = T extends [...infer R, infer L extends number]
+  ? L
+  : 0
+
+/**
+ * GetDigit<12> // 2
+ * GetDigit<1> // 1
+ */
+type GetDigit<T extends number> = `${T}` extends `${infer F extends number}${infer R extends number}`
+  ? R
+  : T
+
+/**
+ * GetTens<12> // 1
+ * GetTens<1> // 0
+ */
+type GetTens<T extends number> = `${T}` extends `${infer F extends number}${infer R extends number}`
+  ? F
+  : 0
+
+type ArraySum<
+  A extends number[] = [],
+  B extends number[] = [],
+  C extends number = 0, // 4 + 8 => 12 => 1
+  Result extends string = '', // 4 + 8 => 12 => 2 + Result
+  AL extends number = Pop<A>,
+  BL extends number = Pop<B>
+> = A extends []
+  ? B extends []
+    ? C extends 0 ? Result : `${C}${Result}`
+    : ArraySum<[], GetRest<B>, GetTens<SingleSum<SingleSum<AL, BL>, C>>, `${GetDigit<SingleSum<SingleSum<AL, BL>, C>>}${Result}`>
+  : B extends []
+    ? ArraySum<GetRest<A>, [], GetTens<SingleSum<SingleSum<AL, BL>, C>>, `${GetDigit<SingleSum<SingleSum<AL, BL>, C>>}${Result}`>
+    : ArraySum<GetRest<A>, GetRest<B>, GetTens<SingleSum<SingleSum<AL, BL>, C>>, `${GetDigit<SingleSum<SingleSum<AL, BL>, C>>}${Result}`>
+    
+
+type Sum<
+  A extends ParamType,
+  B extends ParamType,
+> = ArraySum<Split<A>, Split<B>>
 
 /* _____________ Test Cases _____________ */
 import type { Equal, Expect } from '@type-challenges/utils'
@@ -39,8 +104,6 @@ type cases = [
   Expect<Equal<Sum<'0', 213>, '213'>>,
   Expect<Equal<Sum<0, '0'>, '0'>>,
 ]
-
-
 
 /* _____________ Further Steps _____________ */
 /*
