@@ -30,8 +30,46 @@
 
 
 /* _____________ Your Code Here _____________ */
+type NumberToTuple<T extends number, Result extends 0[] = []> = Result['length'] extends T
+  ? Result
+  : NumberToTuple<T, [0, ...Result]>
 
-type Sort = any
+type MinusOne<T extends number, Result extends 0[] = NumberToTuple<T>> = Result extends [infer F, ...infer R]
+  ? R['length']
+  : 0
+
+type GT<A extends number, B extends number> = A extends B
+  ? false
+  : A extends 0
+    ? false
+    : B extends 0
+      ? true
+      : GT<MinusOne<A>, MinusOne<B>>
+
+type SingleSort<
+  T extends number,
+  Source extends unknown[] = [],
+  Desc extends boolean = false,
+  Result extends number[] = []
+> = Source extends [infer F extends number, ...infer R]
+  ? Equal<T, F> extends true
+    ? [...Result, T, F, ...R]
+    : GT<T, F> extends true
+      ? Desc extends true
+        ? [...Result, T, F, ...R]
+        : SingleSort<T, R, Desc, [...Result, F]>
+      : Desc extends true
+        ? SingleSort<T, R, Desc, [...Result, F]>
+        : [...Result, T, F, ...R]
+  : [...Result, T]
+
+type Sort<
+  T extends unknown[],
+  Desc extends boolean = false,
+  Result extends number[] = []
+> = T extends [infer F extends number, ...infer R]
+  ? Sort<R, Desc, SingleSort<F, Result, Desc>>
+  : Result
 
 
 /* _____________ Test Cases _____________ */
